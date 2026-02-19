@@ -23,12 +23,14 @@ class MMPIApp extends StatelessWidget {
             textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
           ),
         ) ,
-
+        textTheme: const TextTheme(
+          bodyMedium: TextStyle(color:  Color.fromARGB(255, 0, 132, 255), fontSize: 16),
+        ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
           focusColor: Colors.white,
-          
+           
           floatingLabelAlignment: FloatingLabelAlignment.center,
           floatingLabelStyle: TextStyle(
             color: const Color.fromARGB(255, 0, 86, 126), 
@@ -52,7 +54,7 @@ class MMPIApp extends StatelessWidget {
           elevation: 0,
         ),
       ),
-      home:  Registro(),
+      home: _MMPI() //Registro(),
     );
   }
 }
@@ -204,10 +206,11 @@ List<int> respuestas = [];
           ),
         ),
       home: Scaffold(
+        backgroundColor: const Color.fromARGB(255, 208, 244, 255),
         appBar: AppBar(title: Row (
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children:  [
-            Text("Cuestionario MMPI", style: TextStyle(fontWeight: FontWeight.bold, color: Color.fromARGB(255, 184, 0, 240)),),
+            Text("Cuestionario MMPI", style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyMedium!.color,),),
             Container(
               padding: const EdgeInsets.all(8.0),
               decoration: BoxDecoration(
@@ -222,8 +225,10 @@ List<int> respuestas = [];
                 ],
               ),
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.person, color: Color.fromARGB(255, 0, 132, 255),),
+                  const SizedBox(width: 8),
                   Text("Cristian Fernando", style: TextStyle(fontWeight: FontWeight.bold, color: Color.fromARGB(255, 0, 132, 255)),)
                 ],
               ),
@@ -235,10 +240,10 @@ List<int> respuestas = [];
         body: Stack(
             children: [
               Container(
-                decoration: const BoxDecoration(color: Colors.white),
+                decoration: const BoxDecoration(color: Color.fromARGB(255, 222, 254, 255)),
                 padding: const EdgeInsets.all(20),
               ),
-              PageView.builder(
+        /*   PageView.builder(
                 controller: pageController,
                 itemCount: preguntas.length,
                 itemBuilder: (context, index) {
@@ -248,11 +253,45 @@ List<int> respuestas = [];
                     incisos,
                     (seleccionado) => alSeleccionar(index, seleccionado),
                     respuestas[index],
-                    
                   );
                 },
               ),
               Positioned(child: Text(textAlign: TextAlign.center,"Pregunta ${pageController.hasClients ? pageController.page!.toInt() + 1 : 1} de ${preguntas.length}", style: const TextStyle(color: Color.fromARGB(255, 255, 255, 255))), bottom: 10, right: 10, left: 10,)
+           **/
+           ListView.builder(itemCount: preguntas.length,itemBuilder: (context, index) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+              child: Row(
+                children: [
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: const Color.fromARGB(255, 0, 132, 255),
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 5,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Center(child: Text("${index + 1}", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),)),
+                  ),
+                  Flexible(
+                    child: _pagina(
+                            preguntas[index],
+                            const Color.fromARGB(255, 0, 152, 223),
+                            incisos,
+                            (seleccionado) => alSeleccionar(index, seleccionado),
+                            respuestas[index],
+                          ),
+                  ),
+                ],
+              ),
+            );
+           })
             ],
             ),
         
@@ -271,7 +310,7 @@ List<int> respuestas = [];
     setState(() {
       respuestas[preguntaIndex] = incisoIndex;
     });
-    siguientePagina();
+ //   siguientePagina();
   }
 
 
@@ -285,6 +324,8 @@ Widget _pagina(
   return Padding(
     padding: const EdgeInsets.all(8.0),
     child: Container(
+      height:  150,
+      width: double.infinity,
       decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [color.withOpacity(0.4), color],
@@ -302,16 +343,18 @@ Widget _pagina(
       ),
 
         child: SizedBox(
-          height: double.infinity,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               Flexible(child: SizedBox()),
-              AutoSizeText(
-                texto,
-                style: const TextStyle(fontWeight: FontWeight.w900,fontSize: 48, color: Colors.white),
-                textAlign: TextAlign.center,
-                maxLines: 3,
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: AutoSizeText(
+                  texto,
+                  style: const TextStyle(fontWeight: FontWeight.w900,fontSize: 20, color: Color.fromARGB(255, 255, 255, 255),),
+                  textAlign: TextAlign.start,
+                  maxLines: 2,
+                ),
               ),
               SizedBox(height: 20),
               Row(
@@ -325,17 +368,17 @@ Widget _pagina(
                             cambiarPagina(incisos.indexOf(inciso));
                           },
                           child: Container(
-                            constraints: const BoxConstraints(minWidth: 60, minHeight: 60),
+                            constraints: const BoxConstraints(minWidth: 40, minHeight: 40 ),
                             decoration: BoxDecoration(
-                              border: Border.all(width: 5, color: seleccionado == incisos.indexOf(inciso)
-                                  ? const Color.fromARGB(255, 13, 180, 7)
-                                  : Colors.white54),
+                              border: Border.all(width: 3, color: seleccionado == incisos.indexOf(inciso)
+                                  ? const Color.fromARGB(255, 11, 194, 4)
+                                  : const Color.fromARGB(137, 134, 134, 134),),
                               color: seleccionado == incisos.indexOf(inciso)
-                                  ? const Color.fromARGB(255, 9, 255, 0)
-                                  : Colors.white54,
+                                  ? const Color.fromARGB(255, 11, 194, 4)
+                                  : const Color.fromARGB(137, 134, 134, 134),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: Center(child: AutoSizeText(inciso, style: const TextStyle(fontSize: 26, color: Colors.white, fontWeight: FontWeight.w900),))),
+                            child: Center(child: AutoSizeText(inciso, style: const TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.w900),))),
                         ),
                       ),
                     )
