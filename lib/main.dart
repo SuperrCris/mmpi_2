@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:mmpi_2/inciso.dart';
 import 'package:mmpi_2/registro.dart';
 
 void main() {
@@ -188,29 +189,80 @@ class _MMPIState extends State<_MMPI> {
     "Decorar objetos cerámicos, de piel, de madera, de barro, etcétera."
   ];
   final incisos = ["Nada hábil", "Poco hábil", "Medianamente hábil", "Muy hábil", "Extremadamente hábil"];
-List<int> respuestas = [];
-  PageController pageController = PageController();
 
+
+List<int> respuestas = [];
+int paginaActual = 0;
+  PageController pageController = PageController();
+ double ancho = 0;
+ 
+  List<Color> colores = [
+    Colors.red,
+    Colors.green,
+    Colors.blue,
+    Colors.orange,
+    Colors.purple,
+    Colors.teal,
+    Colors.indigo,
+    Colors.pink,
+  ];
   @override
   Widget build(BuildContext context) {
+   ancho = MediaQuery.of(context).size.width;
     for (var _ in preguntas) {
       respuestas.add(-1);
     }
     return MaterialApp(
+    
       debugShowCheckedModeBanner: false,
         theme: ThemeData(
           primarySwatch: Colors.purple,
           appBarTheme: const AppBarTheme(
-            backgroundColor: Color.fromARGB(255, 255, 255, 255),
+            backgroundColor: Color.fromARGB(255, 0, 110, 255),
             elevation: 0,
           ),
         ),
       home: Scaffold(
-        backgroundColor: const Color.fromARGB(255, 208, 244, 255),
+        bottomNavigationBar: 
+
+           
+             Padding(
+               padding: const EdgeInsets.all(8.0),
+               child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                spacing: 10,
+                 children:[ 
+                    ElevatedButton(
+                    style:  ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 0, 132, 255),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                  onPressed: (){
+
+                    verPaginas();
+                  }, 
+                  
+                  child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(Icons.rocket_launch, color: Color.fromARGB(255, 255, 255, 255)),
+                    SizedBox(width: 8),
+                    Text("Ver mi progreso", style: TextStyle(color: Color.fromARGB(255, 255, 255, 255), fontWeight: FontWeight.bold),)
+                  ],
+                 )
+                        ),]
+               ),
+             ),
+         
         appBar: AppBar(title: Row (
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children:  [
-            Text("Cuestionario MMPI", style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyMedium!.color,),),
+            Text("Cuestionario MMPI", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white,),),
+            Card(
+              margin: EdgeInsets.zero,
+              child: Icon(Icons.psychology_alt_outlined),
+            ),
             Container(
               padding: const EdgeInsets.all(8.0),
               decoration: BoxDecoration(
@@ -239,17 +291,13 @@ List<int> respuestas = [];
         ),),
         body: Stack(
             children: [
-              Container(
-                decoration: const BoxDecoration(color: Color.fromARGB(255, 222, 254, 255)),
-                padding: const EdgeInsets.all(20),
-              ),
-        /*   PageView.builder(
+       PageView.builder(
                 controller: pageController,
                 itemCount: preguntas.length,
                 itemBuilder: (context, index) {
                   return _pagina(
                     preguntas[index],
-                    Colors.primaries[index % Colors.primaries.length],
+                    colores[index % colores.length  ],
                     incisos,
                     (seleccionado) => alSeleccionar(index, seleccionado),
                     respuestas[index],
@@ -257,8 +305,12 @@ List<int> respuestas = [];
                 },
               ),
               Positioned(child: Text(textAlign: TextAlign.center,"Pregunta ${pageController.hasClients ? pageController.page!.toInt() + 1 : 1} de ${preguntas.length}", style: const TextStyle(color: Color.fromARGB(255, 255, 255, 255))), bottom: 10, right: 10, left: 10,)
-           **/
-           ListView.builder(itemCount: preguntas.length,itemBuilder: (context, index) {
+        
+               /*   ListView.builder(
+            physics: const ClampingScrollPhysics(),
+            itemCount: preguntas.length,
+            itemBuilder: (context, index) {
+            
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
               child: Row(
@@ -291,7 +343,7 @@ List<int> respuestas = [];
                 ],
               ),
             );
-           })
+           })**/
             ],
             ),
         
@@ -306,11 +358,124 @@ List<int> respuestas = [];
     );
   }
 
+  void verPaginas(){
+    showDialog(
+      context: context, 
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            SizedBox(width: 30,),
+            Text("Respuestas"),
+            GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                height: 30,
+                width: 30,
+                padding: const EdgeInsets.all(4.0),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Icon(Icons.close, color: Colors.white, size: 16,),
+              ),
+            )
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: MediaQuery.of(context).size.height * 0.9,
+          child: FutureBuilder(
+            future: Future.delayed(Duration(milliseconds: 100)),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(
+                  child: CircularProgressIndicator(
+                    color: Color.fromARGB(255, 0, 132, 255),
+                  ),
+                );
+              }
+              
+              return Column(
+                children: [
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      clipBehavior: Clip.hardEdge,
+                      child: GridView.builder(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 10,
+                          childAspectRatio: 1,
+                          mainAxisSpacing: 10,
+                          crossAxisSpacing: 10,
+                        ),
+                        itemCount: preguntas.length,
+                        itemBuilder: (context, index) {
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.pop(context);
+                              pageController.jumpToPage(index);
+                              setState(() {});
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: respuestas[index] == -1 ? Colors.grey : const Color.fromARGB(255, 19, 192, 25),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Center(
+                                child: AutoSizeText(
+                                  "${index + 1}", 
+                                  maxFontSize: 100,
+                                    style: TextStyle(
+                                      fontSize: 48,
+                                      color: const Color.fromARGB(255, 255, 255, 255), 
+                                      fontWeight: FontWeight.bold,
+                                      shadows: [
+                                        Shadow(
+                                          color: Colors.black26,
+                                          blurRadius: 5,
+                                          offset: const Offset(0, 3),
+                                        )
+                                      ]
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 15),
+                  Text(
+                    "Has respondido ${respuestas.where((r) => r != -1).length} de ${preguntas.length} preguntas", 
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold, 
+                      color: const Color.fromARGB(255, 0, 132, 255)
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      )
+    );
+  }
+
   void alSeleccionar(int preguntaIndex, int incisoIndex) {
     setState(() {
       respuestas[preguntaIndex] = incisoIndex;
     });
- //   siguientePagina();
+   siguientePagina();
+  }
+
+  @override
+  void dispose() {
+    pageController.dispose();
+    super.dispose();
   }
 
 
@@ -328,7 +493,7 @@ Widget _pagina(
       width: double.infinity,
       decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [color.withOpacity(0.4), color],
+                colors: [ color,color],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -344,46 +509,40 @@ Widget _pagina(
 
         child: SizedBox(
           child: Column(
+            
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              Flexible(child: SizedBox()),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: AutoSizeText(
-                  texto,
-                  style: const TextStyle(fontWeight: FontWeight.w900,fontSize: 20, color: Color.fromARGB(255, 255, 255, 255),),
-                  textAlign: TextAlign.start,
-                  maxLines: 2,
+              Flexible(
+                flex: 2,
+                child: Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: AutoSizeText(
+                    texto,
+                    style: const TextStyle(fontWeight: FontWeight.w900,fontSize: 100, color: Color.fromARGB(255, 255, 255, 255),),
+                    textAlign: TextAlign.center,
+                    maxLines: 3,
+                  ),
                 ),
               ),
               SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: incisos
-                    .map(
-                      (inciso) => Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: GestureDetector(
-                          onTap: () {
-                            cambiarPagina(incisos.indexOf(inciso));
-                          },
-                          child: Container(
-                            constraints: const BoxConstraints(minWidth: 40, minHeight: 40 ),
-                            decoration: BoxDecoration(
-                              border: Border.all(width: 3, color: seleccionado == incisos.indexOf(inciso)
-                                  ? const Color.fromARGB(255, 11, 194, 4)
-                                  : const Color.fromARGB(137, 134, 134, 134),),
-                              color: seleccionado == incisos.indexOf(inciso)
-                                  ? const Color.fromARGB(255, 11, 194, 4)
-                                  : const Color.fromARGB(137, 134, 134, 134),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Center(child: AutoSizeText(inciso, style: const TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.w900),))),
-                        ),
-                      ),
-                    )
-                    .toList(),
-              ),
+             Flexible(
+              flex: 1,
+               child: Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 8.0,
+                  runSpacing: 8.0,
+                  children: incisos
+                      .map(
+                        (inciso) => GestureDetector(
+                            onTap: () {
+                              cambiarPagina(incisos.indexOf(inciso));
+                            },
+                            child: Inciso(texto: inciso, valor: incisos.indexOf(inciso), seleccionado: seleccionado == incisos.indexOf(inciso), key: null,),
+                          ),
+                      )
+                      .toList(),
+                ),
+             ),
 
             ],
           ),
@@ -392,4 +551,6 @@ Widget _pagina(
     ),
   );
 }
+
+
 }
