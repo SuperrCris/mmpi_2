@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:mmpi_2/inciso.dart';
 import 'package:mmpi_2/registro.dart';
+import 'package:mmpi_2/selecinventario.dart';
 
 void main() {
   runApp(const MMPIApp  ());
@@ -55,7 +56,7 @@ class MMPIApp extends StatelessWidget {
           elevation: 0,
         ),
       ),
-      home: _MMPI() //Registro(),
+      home: SeleccionInventario(), // _MMPI() //Registro(),
     );
   }
 }
@@ -520,7 +521,7 @@ Widget _pagina(
                     texto,
                     style: const TextStyle(fontWeight: FontWeight.w900,fontSize: 100, color: Color.fromARGB(255, 255, 255, 255),),
                     textAlign: TextAlign.center,
-                    maxLines: 3,
+                    maxLines: 4,
                   ),
                 ),
               ),
@@ -529,8 +530,8 @@ Widget _pagina(
               flex: 1,
                child: Wrap(
                   alignment: WrapAlignment.center,
-                  spacing: 8.0,
-                  runSpacing: 8.0,
+                  spacing: 3,
+                  runSpacing: 2,
                   children: incisos
                       .map(
                         (inciso) => GestureDetector(
@@ -543,7 +544,6 @@ Widget _pagina(
                       .toList(),
                 ),
              ),
-
             ],
           ),
         ),

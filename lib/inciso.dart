@@ -34,10 +34,8 @@ class _IncisoState extends State<Inciso> {
       child: AnimatedScale(
         scale: hover ? 1.1 : 1.0,
         duration: Duration(milliseconds: 200),
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Container(
-            padding: EdgeInsets.all(16),
+        child: Container(
+            padding: EdgeInsets.all(5),
             decoration: BoxDecoration(
               color: widget.seleccionado ?  const Color.fromARGB(255, 36, 189, 16)  : const Color.fromARGB(100, 255, 255, 255),
               borderRadius: BorderRadius.all(Radius.circular(45)),
@@ -45,11 +43,11 @@ class _IncisoState extends State<Inciso> {
             ),
             child: Text(
               widget.texto,
-              style: TextStyle(color:  Colors.white, fontSize: 24, fontWeight: FontWeight.w900),
-            ),
-          ),
+              style: TextStyle(color:  Colors.white, fontSize: 16, fontWeight: FontWeight.w900),
+            
+          
         ),
-      ),
+      ),),
     );
   }
 }
