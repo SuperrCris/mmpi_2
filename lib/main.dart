@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:mmpi_2/inciso.dart';
+import 'package:mmpi_2/iniciosesion.dart';
 import 'package:mmpi_2/registro.dart';
 import 'package:mmpi_2/selecinventario.dart';
 
@@ -15,6 +16,12 @@ class MMPIApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      routes: {
+        "/inventario_autoevaluacion_aptitudes": (context) => _MMPI(),
+        "/inventario_interes_ocupacional": (context) => _MMPI(),
+        "/inventario_preferencias_universitarias": (context) => _MMPI(),
+        "/inicio_sesion": (context) => InicioSesion(),
+      },
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         
@@ -56,12 +63,18 @@ class MMPIApp extends StatelessWidget {
           elevation: 0,
         ),
       ),
-      home: SeleccionInventario(), // _MMPI() //Registro(),
+      home: InicioSesion(), //SeleccionInventario(), // _MMPI() //Registro(),
     );
   }
 }
 class _MMPI extends StatefulWidget {
     
+    Map<String, dynamic>? info;
+
+  _MMPI({Key? key, this.info}) : super(key: key);
+
+  
+
   @override
   State<_MMPI> createState() => _MMPIState();
 }
@@ -209,6 +222,11 @@ int paginaActual = 0;
   ];
   @override
   Widget build(BuildContext context) {
+
+  final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+  final info = args["info"] as Map<String, dynamic>;
+  String imagen = info["imagen"] as String;
+  List<Color> colores = info["colores"] as List<Color>;
    ancho = MediaQuery.of(context).size.width;
     for (var _ in preguntas) {
       respuestas.add(-1);
@@ -218,9 +236,19 @@ int paginaActual = 0;
       debugShowCheckedModeBanner: false,
         theme: ThemeData(
           primarySwatch: Colors.purple,
-          appBarTheme: const AppBarTheme(
+          appBarTheme:  AppBarTheme(
             backgroundColor: Color.fromARGB(255, 0, 110, 255),
             elevation: 0,
+            child: Container(
+              height: 100,
+              width: 100,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors:  [
+                 colores[0],
+                  colores[1],
+                ], begin: Alignment.centerLeft, end: Alignment.centerRight),
+              )
+            ),
           ),
         ),
       home: Scaffold(
@@ -260,9 +288,9 @@ int paginaActual = 0;
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children:  [
             Text("Cuestionario MMPI", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white,),),
-            Card(
-              margin: EdgeInsets.zero,
-              child: Icon(Icons.psychology_alt_outlined),
+            Hero(
+              tag: 'icono',
+              child:  Image.asset(imagen, width: 50, height: 50, color: Colors.white,), 
             ),
             Container(
               padding: const EdgeInsets.all(8.0),
