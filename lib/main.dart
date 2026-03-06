@@ -1,12 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mmpi_2/inciso.dart';
 import 'package:mmpi_2/iniciosesion.dart';
 import 'package:mmpi_2/registro.dart';
 import 'package:mmpi_2/selecinventario.dart';
+import 'package:mmpi_2/modelos/modelos.dart';
+import 'package:mmpi_2/services/hive_service.dart';
+import 'package:mmpi_2/services/data_initialization_service.dart';
 
-void main() {
-  runApp(const MMPIApp  ());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  try {
+    print('🚀 Iniciando aplicación MMPI-2...');
+    
+    // Inicializar Hive
+    await Hive.initFlutter();
+    print('📦 Hive inicializado');
+    
+    // Registrar adaptadores de Hive
+    Hive.registerAdapter(InfoUsuarioAdapter());
+    Hive.registerAdapter(RespuestasAdapter());
+    print('🔧 Adaptadores Hive registrados');
+    
+    // Inicializar el servicio de Hive
+    await HiveService.initialize();
+    
+    print('✅ Aplicación inicializada correctamente');
+  } catch (e) {
+    print('❌ Error al inicializar la aplicación: $e');
+    // En producción, podrías mostrar un diálogo de error al usuario
+  }
+  
+  runApp(const MMPIApp());
 }
 
 
@@ -579,6 +606,4 @@ Widget _pagina(
     ),
   );
 }
-
-
 }

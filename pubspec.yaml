@@ -10,11 +10,21 @@ dependencies:
   flutter:
     sdk: flutter
   auto_size_text: ^3.0.0
+  # Hive para almacenamiento offline
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  # Para conectividad y sincronización
+  connectivity_plus: ^4.0.2
+  # Para generar UUIDs
+  uuid: ^3.0.7
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  # Para generar código Hive
+  hive_generator: ^2.0.1
+  build_runner: ^2.4.7
 
 flutter:
   uses-material-design: true
