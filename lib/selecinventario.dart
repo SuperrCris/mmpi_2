@@ -51,8 +51,9 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
         "imagen": "recursos/tridente.png",
         "bloqueado": RepositorioDeRespuestas.obtenerCantidadRespuestasUsuarioYTipo(usuarioId, "/inventario_autoevaluacion_aptitudes") < 120,
         "colores": [
-          Color.fromARGB(255, 255, 0, 0),
           Color.fromARGB(255, 255, 132, 0),
+          Color.fromARGB(255, 255, 0, 0),
+         
         ],
         "ruta": "/inventario_interes_ocupacional",
       },
@@ -94,7 +95,7 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
                       Navigator.pushNamed(
                         context,
                         inventarios[inventario]["ruta"],
-                        arguments: {"info": inventarios[inventario]},
+                        arguments: {"info": <String, dynamic>{...inventarios[inventario]!, "titulo": inventario}},
                       ).then((_) => setState(() {}));
                     }
                   },

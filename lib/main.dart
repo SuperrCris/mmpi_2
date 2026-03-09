@@ -366,22 +366,23 @@ List<int> respuestas = [];
   final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
   final info = args["info"] as Map<String, dynamic>;
   String imagen = info["imagen"] as String;
-  List<Color> colores = info["colores"] as List<Color>;
+
+  List<Color> coloresBarra = info["colores"] as List<Color>;
    ancho = MediaQuery.of(context).size.width;
     return MaterialApp(
       debugShowCheckedModeBanner: false,
         theme: ThemeData(
           primarySwatch: Colors.purple,
           appBarTheme:  AppBarTheme(
-            backgroundColor: Color.fromARGB(255, 0, 110, 255),
+            backgroundColor: coloresBarra[1],
             elevation: 0,
             child: Container(
               height: 100,
               width: 100,
               decoration: BoxDecoration(
                 gradient: LinearGradient(colors:  [
-                 colores[0],
-                  colores[1],
+                 coloresBarra[0],
+                  coloresBarra[1],
                 ], begin: Alignment.centerLeft, end: Alignment.centerRight),
               )
             ),
@@ -426,20 +427,21 @@ List<int> respuestas = [];
             ElevatedButton(
                           style: ElevatedButton.styleFrom(
                       backgroundColor:  Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      shape: RoundedRectangleBorder (borderRadius: BorderRadius.circular(20)),
                       textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
               onPressed: (){
-
               Navigator.pop(context);
             }, child: 
             Icon(Icons.arrow_back, color: Colors.blue,)
             ),
-            Text("Cuestionario MMPI", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white,),),
-            Hero(
+            Row(spacing: 3,children: [
+                      Hero(
               tag: ModalRoute.of(context)!.settings.name ?? '',
-              child:  Image.asset(imagen, width: 50, height: 50, color: Colors.white,), 
+              child:  Image.asset(imagen, width: 30, height: 30, color: Colors.white,), 
             ),
+              Text(info["titulo"], style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white,),)]),
+    
             Container(
               padding: const EdgeInsets.all(8.0),
               decoration: BoxDecoration(
