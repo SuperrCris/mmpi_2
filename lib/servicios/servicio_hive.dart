@@ -10,7 +10,6 @@ class HiveService {
   static Box<InfoUsuario>? _cajaInfoUsuario;
   static Box<dynamic>? _cajaOpciones;
 
-  // Getters para acceder a las cajas
   static Box<Respuestas> get cajaRespuestas => _cajaRespuestas!;
   static Box<InfoUsuario> get cajaInfoUsuario => _cajaInfoUsuario!;
 
@@ -20,9 +19,27 @@ class HiveService {
       _cajaRespuestas = await Hive.openBox<Respuestas>(_nombreCajaRespuestas);
       _cajaInfoUsuario = await Hive.openBox<InfoUsuario>(_nombreCajaInfoUsuario);
       _cajaOpciones = await Hive.openBox<dynamic>(_nombreCajaOpciones);
+
+ 
+      //Crear usuario invitado
+      if (_cajaInfoUsuario!.isEmpty) {
+        final usuarioInvitado = InfoUsuario(
+          id: -1,
+          nombre: 'Invitado',
+          apellido: '',
+          rfc: '',
+          curp: '',
+          correo: '',
+        );
+
+        await _cajaInfoUsuario!.add(usuarioInvitado);
+        print('👤 Usuario invitado creado');
+      }
+
+ 
       print('✅ Hive inicializado correctamente');
-      print('   📚 Preguntas: ${_cajaRespuestas!.length}');
-      print('   📝 Respuestas: ${_cajaInfoUsuario!.length}');
+      print('   📚 Respuestas: ${_cajaRespuestas!.length}');
+      print('   📝 Usuarios: ${_cajaInfoUsuario!.length}');
       print('   ⚙️ Opciones: ${_cajaOpciones!.length}');
     } catch (e) {
       print('❌ Error al inicializar Hive: $e');
@@ -42,6 +59,14 @@ class HiveService {
       'respuestas': _cajaRespuestas?.length ?? 0,
       'infoUsuario': _cajaInfoUsuario?.length ?? 0,
     };
+  }
+
+  static List<String> obtenerInventariosCompletados(String usuarioId) {
+    final usuario = _cajaInfoUsuario?.values.firstWhere(
+      (user) => user.id.toString() == usuarioId,
+      orElse: () => InfoUsuario(id: -1, nombre: 'Invitado', apellido: '', rfc: '', curp: '', correo: ''),
+    );
+    return usuario?.invsCompletados ?? [];
   }
 
   // Limpiar todos los datos (útil para desarrollo)
@@ -79,6 +104,7 @@ class HiveService {
   static dynamic get isFirstRun {
     return getSetting('primeraEjecucion', defaultValue: true);
   }
+
 
   // Marcar que la app ya se ejecutó
   static Future<void> marcarPrimeraEjecucion() async {

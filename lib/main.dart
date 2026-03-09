@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -6,8 +8,8 @@ import 'package:mmpi_2/iniciosesion.dart';
 import 'package:mmpi_2/registro.dart';
 import 'package:mmpi_2/selecinventario.dart';
 import 'package:mmpi_2/modelos/modelos.dart';
-import 'package:mmpi_2/services/hive_service.dart';
-import 'package:mmpi_2/services/data_initialization_service.dart';
+import 'package:mmpi_2/servicios/servicios.dart';
+import 'package:mmpi_2/servicios/sesion_controlador.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,14 +53,31 @@ class MMPIApp extends StatelessWidget {
       },
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        
-        elevatedButtonTheme: ElevatedButtonThemeData(
+        dialogTheme: DialogThemeData(
+          
+          backgroundColor: Colors.white,
+          titleTextStyle: TextStyle(
+            color: const Color.fromARGB(255, 0, 132, 255), 
+            fontSize: 20, 
+            fontWeight: FontWeight.bold
+          ),
+          contentTextStyle: TextStyle(
+            color: const Color.fromARGB(255, 0, 132, 255), 
+            fontSize: 16
+          ),
+          
+          ),
+         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color.fromARGB(255, 0, 202, 27),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
           ),
         ) ,
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
         textTheme: const TextTheme(
           bodyMedium: TextStyle(color:  Color.fromARGB(255, 0, 132, 255), fontSize: 16),
         ),
@@ -89,6 +108,7 @@ class MMPIApp extends StatelessWidget {
           backgroundColor: Color.fromARGB(255, 255, 255, 255),
           elevation: 0,
         ),
+        
       ),
       home: InicioSesion(), //SeleccionInventario(), // _MMPI() //Registro(),
     );
@@ -230,11 +250,104 @@ class _MMPIState extends State<_MMPI> {
     "Decorar objetos cerámicos, de piel, de madera, de barro, etcétera."
   ];
   final incisos = ["Nada hábil", "Poco hábil", "Medianamente hábil", "Muy hábil", "Extremadamente hábil"];
-
-
+PageController pageController = PageController();
+int paginaActual = 1;
 List<int> respuestas = [];
-int paginaActual = 0;
-  PageController pageController = PageController();
+  bool _initialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    respuestas = List<int>.filled(preguntas.length, -1);
+    pageController.addListener(() {
+      final nuevaPagina = pageController.hasClients ? pageController.page!.round() + 1 : 1;
+      if (nuevaPagina != paginaActual) {
+        setState(() {
+          paginaActual = nuevaPagina;
+        });
+      }
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _initialized = true;
+      _cargarRespuestasGuardadas();
+    }
+  }
+
+  void cuestionarioCompleto() {
+     if (!respuestas.contains(-1)){
+    final id = HiveService.cajaInfoUsuario.values.first.id.toString();
+    final tipoInventario = ModalRoute.of(context)?.settings.name ?? '';
+
+
+    if (!RepositorioDeRespuestas.obtInventariosRespondidos(id)
+    .contains(tipoInventario)) {
+    RepositorioDeRespuestas.marcarInventarioComoCompletado(id, tipoInventario);
+   showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Center(child: const Text("Cuestionario Completo")),
+        content:Text("¡Has completado el cuestionario!", textAlign: TextAlign.center,),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Seguir respondiendo"),
+          ),
+           TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Seleccionar otro inventario"),
+          ),
+        ],
+      ),
+    );
+
+    }
+  } else {print("Faltan por responder");}
+  }
+
+  void _responderTodoAutomaticamente() {
+    for (int preguntaIndex = 0; preguntaIndex < preguntas.length; preguntaIndex++) {
+    alSeleccionar(preguntaIndex, Random().nextInt(4));
+
+  }
+     cuestionarioCompleto();}
+
+  void _cargarRespuestasGuardadas() {
+    final tipo = ModalRoute.of(context)?.settings.name ?? '';
+    final usuario = HiveService.cajaInfoUsuario.values.isNotEmpty
+        ? HiveService.cajaInfoUsuario.values.first
+        : null;
+    if (usuario == null || tipo.isEmpty) return;
+
+    final guardadas = RepositorioDeRespuestas.obtRespuestasPorTipo(tipo);
+
+    setState(() {
+      for (final r in guardadas) {
+        if (r.preguntaID >= 0 && r.preguntaID < respuestas.length) {
+          respuestas[r.preguntaID] = int.tryParse(r.respuesta) ?? -1;
+        }
+      }
+    });
+
+    final saltarA = respuestas.indexWhere((r) => r == -1);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      pageController.jumpToPage(saltarA == -1 ? 0 : saltarA);
+      setState(() {
+              actualizarNumPagina();
+      });
+
+    });
+  }
+
+ void actualizarNumPagina(){
+      paginaActual = pageController.hasClients ? pageController.page!.toInt() + 1 : 1;
+ }
+
  double ancho = 0;
  
   List<Color> colores = [
@@ -255,11 +368,7 @@ int paginaActual = 0;
   String imagen = info["imagen"] as String;
   List<Color> colores = info["colores"] as List<Color>;
    ancho = MediaQuery.of(context).size.width;
-    for (var _ in preguntas) {
-      respuestas.add(-1);
-    }
     return MaterialApp(
-    
       debugShowCheckedModeBanner: false,
         theme: ThemeData(
           primarySwatch: Colors.purple,
@@ -314,9 +423,21 @@ int paginaActual = 0;
         appBar: AppBar(title: Row (
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children:  [
+            ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                      backgroundColor:  Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+              onPressed: (){
+
+              Navigator.pop(context);
+            }, child: 
+            Icon(Icons.arrow_back, color: Colors.blue,)
+            ),
             Text("Cuestionario MMPI", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white,),),
             Hero(
-              tag: 'icono',
+              tag: ModalRoute.of(context)!.settings.name ?? '',
               child:  Image.asset(imagen, width: 50, height: 50, color: Colors.white,), 
             ),
             Container(
@@ -332,13 +453,16 @@ int paginaActual = 0;
                   ),
                 ],
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.person, color: Color.fromARGB(255, 0, 132, 255),),
-                  const SizedBox(width: 8),
-                  Text("Cristian Fernando", style: TextStyle(fontWeight: FontWeight.bold, color: Color.fromARGB(255, 0, 132, 255)),)
-                ],
+              child: GestureDetector(
+                onTap: () => _responderTodoAutomaticamente(),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.person, color: Color.fromARGB(255, 0, 132, 255),),
+                    const SizedBox(width: 8),
+                    Text("Cristian Fernando", style: TextStyle(fontWeight: FontWeight.bold, color: Color.fromARGB(255, 0, 132, 255)),)
+                  ],
+                ),
               ),
             ),
 
@@ -360,7 +484,7 @@ int paginaActual = 0;
                   );
                 },
               ),
-              Positioned(child: Text(textAlign: TextAlign.center,"Pregunta ${pageController.hasClients ? pageController.page!.toInt() + 1 : 1} de ${preguntas.length}", style: const TextStyle(color: Color.fromARGB(255, 255, 255, 255))), bottom: 10, right: 10, left: 10,)
+              Positioned(child: Text(textAlign: TextAlign.center,"Pregunta ${paginaActual} de ${preguntas.length}", style: const TextStyle(color: Color.fromARGB(255, 255, 255, 255))), bottom: 10, right: 10, left: 10,)
         
                /*   ListView.builder(
             physics: const ClampingScrollPhysics(),
@@ -412,6 +536,7 @@ int paginaActual = 0;
       duration: const Duration(milliseconds: 200),
       curve: Curves.bounceInOut,
     );
+  cuestionarioCompleto();
   }
 
   void verPaginas(){
@@ -472,7 +597,6 @@ int paginaActual = 0;
                             onTap: () {
                               Navigator.pop(context);
                               pageController.jumpToPage(index);
-                              setState(() {});
                             },
                             child: Container(
                               decoration: BoxDecoration(
@@ -522,10 +646,28 @@ int paginaActual = 0;
   }
 
   void alSeleccionar(int preguntaIndex, int incisoIndex) {
+
     setState(() {
       respuestas[preguntaIndex] = incisoIndex;
-    });
-   siguientePagina();
+    }
+    
+    );
+        siguientePagina();
+
+    final tipo = ModalRoute.of(context)?.settings.name ?? '';
+    final usuario = HiveService.cajaInfoUsuario.values.isNotEmpty
+        ? HiveService.cajaInfoUsuario.values.first
+        : null;
+    if (usuario != null && tipo.isNotEmpty) {
+      RepositorioDeRespuestas.guardarRespuesta(
+        usuarioId: usuario.id.toString(),
+        preguntaID: preguntaIndex,
+        respuesta: incisoIndex.toString(),
+        tipoInventario: tipo,
+      );
+    } else {
+      print('⚠️ No se pudo guardar la respuesta: usuario o tipo no disponibles');
+    }
   }
 
   @override

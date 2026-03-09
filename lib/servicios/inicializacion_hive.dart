@@ -1,6 +1,6 @@
 
-import 'package:mmpi_2/services/questionnaire_repository.dart';
-import 'package:mmpi_2/services/hive_service.dart';
+import 'package:mmpi_2/servicios/respuestas_hive.dart';
+import 'package:mmpi_2/servicios/servicio_hive.dart';
 
 class ServicioDeInicializacionDatos {
   

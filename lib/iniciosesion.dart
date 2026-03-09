@@ -23,8 +23,16 @@ class _InicioSesionState extends State<InicioSesion> {
     super.dispose();
   }
 
-  void _iniciarSesion() {
-    // validate() ejecuta todos los validadores de los TextFormField
+  void _iniciarSesion({
+    bool enLinea = true
+    }) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => SeleccionInventario()),
+      );
+    if (!enLinea){
+
+    }
     if (_formKey.currentState!.validate()) {
       // Si todos los campos son válidos, procesar el login
       print('Email: ${_emailController.text}');
@@ -38,6 +46,7 @@ class _InicioSesionState extends State<InicioSesion> {
         MaterialPageRoute(builder: (context) => SeleccionInventario()),
       );
     }
+
   }
 
   @override
@@ -158,6 +167,17 @@ class _InicioSesionState extends State<InicioSesion> {
                       ),
                     ),
                     SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: _iniciarSesion,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepOrangeAccent,
+                        minimumSize: Size(double.infinity, 50),
+                      ),
+                      child: Text(
+                        'Iniciar sin conexión',
+                        style: TextStyle(fontSize: 14, color: Colors.white),
+                      ),
+                    ),
                     SizedBox(height: 10),
                     ElevatedButton(
                       onPressed: () {},

@@ -23,13 +23,14 @@ class InfoUsuarioAdapter extends TypeAdapter<InfoUsuario> {
       rfc: fields[3] as String,
       curp: fields[4] as String,
       correo: fields[5] as String,
+      invsCompletados: (fields[6] as List?)?.cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, InfoUsuario obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -41,7 +42,9 @@ class InfoUsuarioAdapter extends TypeAdapter<InfoUsuario> {
       ..writeByte(4)
       ..write(obj.curp)
       ..writeByte(5)
-      ..write(obj.correo);
+      ..write(obj.correo)
+      ..writeByte(6)
+      ..write(obj.invsCompletados);
   }
 
   @override

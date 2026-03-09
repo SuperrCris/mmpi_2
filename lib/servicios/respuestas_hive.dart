@@ -1,9 +1,7 @@
-import 'package:uuid/uuid.dart';
 import 'package:mmpi_2/modelos/modelos.dart';
-import 'package:mmpi_2/services/hive_service.dart';
+import 'package:mmpi_2/servicios/servicio_hive.dart';
 
 class RepositorioDeRespuestas {
-  static const _uuid = Uuid();
 
 
 
@@ -35,19 +33,20 @@ class RepositorioDeRespuestas {
     required String usuarioId,
     required int preguntaID,
     required String respuesta,
-    required String inventoryType,
+    required String tipoInventario,
   }) async {
     final res = Respuestas(
       respuesta: respuesta,
       preguntaID: preguntaID,
       usuarioId: usuarioId,
-      tipo: inventoryType
+      tipo: tipoInventario
     );
 
-    await HiveService.cajaRespuestas.put(res.key, res);
+    final key = '${usuarioId}_${tipoInventario}_$preguntaID';
+    await HiveService.cajaRespuestas.put(key, res);
 
 
-    print('💾 Respuesta guardada: Q${preguntaID} = $respuesta');
+    print('💾 Respuesta guardada: [${tipoInventario}] Pregunta${preguntaID} = $respuesta');
     return res;
   }
 
@@ -59,6 +58,37 @@ class RepositorioDeRespuestas {
         .where((response) => !response.sincronizado)
         .toList();
   }
+
+  static List<String> obtInventariosRespondidos(String usuarioId) {
+    final usuario = HiveService.cajaInfoUsuario.values.firstWhere(
+      (user) => user.id.toString() == usuarioId,
+      orElse: () => InfoUsuario(id: -2, nombre: 'Invitado', apellido: '', rfc: '', curp: '', correo: ''),
+    );
+
+    if (usuario.id != -2) {
+      return usuario.invsCompletados;
+    } else {
+      return [];
+    }
+  }
+
+  static void marcarInventarioComoCompletado(String usuarioId, String tipoInventario) {
+    final usuario = HiveService.cajaInfoUsuario.values.firstWhere(
+      (user) => user.id.toString() == usuarioId,
+      orElse: () => InfoUsuario(id: -1, nombre: 'Invitado', apellido: '', rfc: '', curp: '', correo: ''),
+    );
+
+
+      if (!usuario.invsCompletados.contains(tipoInventario)) {
+        usuario.invsCompletados.add(tipoInventario);
+        usuario.save();
+        print('✅ Inventario "$tipoInventario" marcado como completado para el usuario ${usuario.nombre}');
+      } else {
+        print('ℹ️ El inventario "$tipoInventario" ya estaba marcado como completado para el usuario ${usuario.nombre}');
+      }
+    } 
+    
+  
 
   static Future<void> marcarRespuestasComoSincronizadas(List<int> responseIds) async {
     for (final id in responseIds) {
@@ -97,6 +127,29 @@ class RepositorioDeRespuestas {
         .where((response) => response.usuarioId == usuarioId)
         .toList();
   }
+
+  static int obtenerCantidadRespuestasUsuarioYTipo(String usuarioId, String tipoInventario) {
+    return HiveService.cajaRespuestas.values
+        .cast<Respuestas>()
+        .where((respuesta) => respuesta.usuarioId == usuarioId && respuesta.tipo == tipoInventario)
+        .toList().length;
+  }
+
+  static int obtenerPrimeraPreguntaSinResponder(String usuarioId, String tipoInventario) {
+    final respuestasUsuario = HiveService.cajaRespuestas.values
+        .cast<Respuestas>()
+        .where((respuesta) => respuesta.usuarioId == usuarioId && respuesta.tipo == tipoInventario)
+        .toList();
+
+    for (int i = 0; i < 120; i++) {
+      if (!respuestasUsuario.any((respuesta) => respuesta.preguntaID == i)) {
+        return i; // Retorna el ID de la primera pregunta sin responder
+      }
+    }
+    return -1; // Todas las preguntas han sido respondidas
+  }
+
+
 
 
 

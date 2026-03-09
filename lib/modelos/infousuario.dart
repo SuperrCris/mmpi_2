@@ -22,6 +22,14 @@ class InfoUsuario extends HiveObject {
   @HiveField(5)
   String correo;
 
+  List<String> _invsCompletados = [];
+
+  @HiveField(6)
+  List<String> get invsCompletados => _invsCompletados;
+  set invsCompletados(List<String> value) {
+    _invsCompletados = List<String>.from(value);
+  }
+
   InfoUsuario({
     required this.id,
     required this.nombre,
@@ -29,7 +37,12 @@ class InfoUsuario extends HiveObject {
     required this.rfc,
     required this.curp,
     required this.correo,
-  });
+    List<String>? invsCompletados,
+  }) {
+    if (invsCompletados != null) {
+      this.invsCompletados = invsCompletados;
+    }
+  }
 
   factory InfoUsuario.desdeJson(Map<String, dynamic> json) {
     return InfoUsuario(
@@ -39,6 +52,7 @@ class InfoUsuario extends HiveObject {
       rfc: json['rfc'],
       curp: json['curp'],
       correo: json['correo'],
+      invsCompletados: List<String>.from(json['invsCompletados'] ?? []),
     );
   }
 
@@ -50,6 +64,7 @@ class InfoUsuario extends HiveObject {
       'rfc': rfc,
       'curp': curp,
       'correo': correo,
+      'invsCompletados': invsCompletados,
     };
   }
 }

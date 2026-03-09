@@ -1,5 +1,7 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:mmpi_2/servicios/sesion_controlador.dart';
+import 'package:mmpi_2/servicios/respuestas_hive.dart';
 
 class SeleccionInventario extends StatefulWidget {
   @override
@@ -7,39 +9,76 @@ class SeleccionInventario extends StatefulWidget {
 }
 
 class _SeleccionInventarioState extends State<SeleccionInventario> {
-  Map<String, dynamic> inventarios = {
-    "Inventario de autoevaluacion de aptitudes": {
-      "imagen": "recursos/cerebro.png",
-      "bloqueado": false,
-      "colores": [
-        Color.fromARGB(255, 0, 177, 153),
-        Color.fromARGB(255, 1, 132, 255),
-      ],
-      "ruta": "/inventario_autoevaluacion_aptitudes",
-    },
-    "Inventario de interes ocupacional": {
-      "imagen": "recursos/tridente.png",
-      "bloqueado": true,
-      "colores": [
-        Color.fromARGB(255, 255, 0, 0),
-        Color.fromARGB(255, 255, 132, 0),
-      ],
-      "ruta": "/inventario_interes_ocupacional",
-    },
-    "Inventario de preferencias universitarias": {
-      "imagen": "recursos/libro.png",
-      "bloqueado": true,
-      "colores": [
-        Color.fromARGB(255, 255, 0, 0),
-        Color.fromARGB(255, 255, 132, 0),
-      ],
-      "ruta": "/inventario_preferencias_universitarias",
-    },
-  };
+  @override
+  void initState() {
+    super.initState();
+    if (!SesionControlador().estaEnLinea) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text("Estas iniciando como invitado, lo que significa que:"),
+            content: Text(
+              "• Tus respuestas solo se guardan en tu computadora \n • No podrás acceder a tus resultados desde otro dispositivo\n • El registro quedará pendiente \n • Respalda tus resultados siempre que puedas",
+            ),
+            actionsAlignment: MainAxisAlignment.center,
+            actions: [
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text("Esta bien", style: TextStyle(color: Colors.white),),
+              ),
+            ],
+          ),
+        );
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final usuarioId = SesionControlador().usuarioId;
+    Map<String, dynamic> inventarios = {
+      "Inventario de autoevaluacion de aptitudes": {
+        "imagen": "recursos/cerebro.png",
+        "bloqueado": false,
+        "colores": [
+          Color.fromARGB(255, 0, 177, 153),
+          Color.fromARGB(255, 1, 132, 255),
+        ],
+        "ruta": "/inventario_autoevaluacion_aptitudes",
+      },
+      "Inventario de interes ocupacional": {
+        "imagen": "recursos/tridente.png",
+        "bloqueado": RepositorioDeRespuestas.obtenerCantidadRespuestasUsuarioYTipo(usuarioId, "/inventario_autoevaluacion_aptitudes") < 120,
+        "colores": [
+          Color.fromARGB(255, 255, 0, 0),
+          Color.fromARGB(255, 255, 132, 0),
+        ],
+        "ruta": "/inventario_interes_ocupacional",
+      },
+      "Inventario de preferencias universitarias": {
+        "imagen": "recursos/libro.png",
+        "bloqueado": RepositorioDeRespuestas.obtenerCantidadRespuestasUsuarioYTipo(usuarioId, "/inventario_interes_ocupacional") < 120,
+        "colores": [
+          Color.fromARGB(255, 255, 0, 191),
+          Color.fromARGB(255, 140, 0, 255),
+        ],
+        "ruta": "/inventario_preferencias_universitarias",
+      },
+    };
     return Scaffold(
+      bottomSheet: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(minimumSize: Size(100,100), maximumSize: Size(100, 100), backgroundColor: const Color.fromARGB(255, 248, 33, 212)),
+            onPressed: () {
+        
+            },
+            child: Icon(Icons.settings, color: Colors.white, size: 30),
+        
+          
+        ),
+      ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(8.0),
@@ -56,7 +95,7 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
                         context,
                         inventarios[inventario]["ruta"],
                         arguments: {"info": inventarios[inventario]},
-                      );
+                      ).then((_) => setState(() {}));
                     }
                   },
                   child: TweenAnimationBuilder<double>(
@@ -115,7 +154,7 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
                                 ),
                                 child: Center(
                                   child: AutoSizeText(
-                                    "0 / 120",
+                                    "${RepositorioDeRespuestas.obtenerCantidadRespuestasUsuarioYTipo(SesionControlador().usuarioId, inventarios[inventario]["ruta"])} / 120",
                                     style: TextStyle(
                                       color:
                                           inventarios[inventario]["colores"][1],
@@ -159,7 +198,7 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
                                       color: Colors.grey,
                                     )
                                   : Hero(
-                                      tag: "icono",
+                                      tag: inventarios[inventario]["ruta"],
                                     child: Image.asset(
                                         width: 150,
                                         height: 150,
