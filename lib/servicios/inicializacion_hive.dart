@@ -1,5 +1,5 @@
 
-import 'package:mmpi_2/servicios/respuestas_hive.dart';
+import 'package:mmpi_2/servicios/controlador_hive.dart';
 import 'package:mmpi_2/servicios/servicio_hive.dart';
 
 class ServicioDeInicializacionDatos {
@@ -47,7 +47,7 @@ class ServicioDeInicializacionDatos {
 
   /// Mostrar resumen de datos cargados
   static void _imprimirResumenDeDatos() {
-    final stats = RepositorioDeRespuestas.getStats();
+    final stats = ControladorHive.getStats();
     print('📊 RESUMEN DE DATOS:');
     print('   📝 Respuestas: ${stats['respuestas']} (${stats['respuestasNoSincronizadas']} sin sincronizar)');
 
@@ -56,7 +56,7 @@ class ServicioDeInicializacionDatos {
 
   /// Limpiar todos los datos (útil para testing)
   static Future<void> clearAllData() async {
-    await RepositorioDeRespuestas.clearAllData();
+    await ControladorHive.clearAllData();
     await HiveService.saveSetting('isFirstRun', true);
     print('🗑️ Todos los datos eliminados. La app requerirá inicialización.');
   }

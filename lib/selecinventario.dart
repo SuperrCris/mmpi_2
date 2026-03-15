@@ -1,7 +1,8 @@
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mmpi_2/servicios/sesion_controlador.dart';
-import 'package:mmpi_2/servicios/respuestas_hive.dart';
+import 'package:mmpi_2/servicios/controlador_hive.dart';
 
 class SeleccionInventario extends StatefulWidget {
   @override
@@ -12,7 +13,7 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
   @override
   void initState() {
     super.initState();
-    if (!SesionControlador().estaEnLinea) {
+    if (FirebaseAuth.instance.currentUser == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showDialog(
           context: context,
@@ -49,7 +50,7 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
       },
       "Inventario de interes ocupacional": {
         "imagen": "recursos/tridente.png",
-        "bloqueado": RepositorioDeRespuestas.obtenerCantidadRespuestasUsuarioYTipo(usuarioId, "/inventario_autoevaluacion_aptitudes") < 120,
+        "bloqueado": ControladorHive.obtenerCantidadRespuestasUsuarioYTipo(usuarioId, "/inventario_autoevaluacion_aptitudes") < 120,
         "colores": [
           Color.fromARGB(255, 255, 132, 0),
           Color.fromARGB(255, 255, 0, 0),
@@ -59,7 +60,7 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
       },
       "Inventario de preferencias universitarias": {
         "imagen": "recursos/libro.png",
-        "bloqueado": RepositorioDeRespuestas.obtenerCantidadRespuestasUsuarioYTipo(usuarioId, "/inventario_interes_ocupacional") < 120,
+        "bloqueado": ControladorHive.obtenerCantidadRespuestasUsuarioYTipo(usuarioId, "/inventario_interes_ocupacional") < 120,
         "colores": [
           Color.fromARGB(255, 255, 0, 191),
           Color.fromARGB(255, 140, 0, 255),
@@ -84,11 +85,26 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: SingleChildScrollView(
-            child: Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 16,
-              runSpacing: 16,
-              children: inventarios.keys.map((inventario) {
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24.0),
+                  child: Text(
+                    "¡Hola, ${SesionControlador().nombreUsuario}!",
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.deepPurple,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 16,
+                  runSpacing: 16,
+                  children: inventarios.keys.map((inventario) {
                 return GestureDetector(
                   onTap: () {
                     if (!inventarios[inventario]["bloqueado"]) {
@@ -125,7 +141,10 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color.fromARGB(55, 0, 0, 0),
+                            color: inventarios[inventario]["bloqueado"]
+                                ? Colors.grey.withOpacity(0.5)
+                                : inventarios[inventario]["colores"][0].withOpacity(0.5),
+                            
                             spreadRadius: 5,
                             blurRadius: 7,
                             offset: Offset(0, 3),
@@ -155,7 +174,7 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
                                 ),
                                 child: Center(
                                   child: AutoSizeText(
-                                    "${RepositorioDeRespuestas.obtenerCantidadRespuestasUsuarioYTipo(SesionControlador().usuarioId, inventarios[inventario]["ruta"])} / 120",
+                                    "${ControladorHive.obtenerCantidadRespuestasUsuarioYTipo(SesionControlador().usuarioId, inventarios[inventario]["ruta"])} / 120",
                                     style: TextStyle(
                                       color:
                                           inventarios[inventario]["colores"][1],
@@ -219,6 +238,8 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
                   ),
                 );
               }).toList(),
+                ),
+              ],
             ),
           ),
         ),

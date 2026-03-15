@@ -17,6 +17,12 @@ dependencies:
   connectivity_plus: ^4.0.2
   # Para generar UUIDs
   uuid: ^3.0.7
+  # Para acceder al sistema de archivos
+  path_provider: ^2.1.5
+  excel: ^4.0.6
+  firebase_core: ^3.15.2
+  firebase_auth: ^5.5.0
+  cloud_firestore: ^5.6.0
 
 dev_dependencies:
   flutter_test:
@@ -30,3 +36,4 @@ flutter:
   uses-material-design: true
   assets:
     - recursos/
+    

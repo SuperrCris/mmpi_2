@@ -1,9 +1,22 @@
 import 'package:mmpi_2/modelos/modelos.dart';
 import 'package:mmpi_2/servicios/servicio_hive.dart';
 
-class RepositorioDeRespuestas {
+class ControladorHive {
 
+static Future<void> crearUsuario(InfoUsuario usuario) async {
+    try {
+      await HiveService.cajaInfoUsuario.add(usuario);
+      print('👤 Usuario "${usuario.nombre}" creado en Hive con ID: ${usuario.id}');
+    } catch (e) {
+      print('❌ Error al crear usuario en Hive: $e');
+    }
+  }
 
+static InfoUsuario? obtenerInfoUsuario(String usuarioId) {
+    return HiveService.cajaInfoUsuario.values
+        .cast<InfoUsuario>()
+        .firstWhere((user) => user.id == usuarioId, orElse: () => InfoUsuario(id: "-1", nombre: 'Invitado', apellido: '', rfc: '', curp: '', correo: ''));
+  }
 
   /// Obtener una respuesta específica por ID
   static Respuestas? obtRespuesta(int id) {
@@ -23,6 +36,7 @@ class RepositorioDeRespuestas {
   static int conteo(String tipo) {
     return obtRespuestasPorTipo(tipo).length;
   }
+  
 
 
 
@@ -61,11 +75,11 @@ class RepositorioDeRespuestas {
 
   static List<String> obtInventariosRespondidos(String usuarioId) {
     final usuario = HiveService.cajaInfoUsuario.values.firstWhere(
-      (user) => user.id.toString() == usuarioId,
-      orElse: () => InfoUsuario(id: -2, nombre: 'Invitado', apellido: '', rfc: '', curp: '', correo: ''),
+      (user) => user.id == usuarioId,
+      orElse: () => InfoUsuario(id: "-2", nombre: 'Invitado', apellido: '', rfc: '', curp: '', correo: ''),
     );
 
-    if (usuario.id != -2) {
+    if (usuario.id != "-2") {
       return usuario.invsCompletados;
     } else {
       return [];
@@ -75,7 +89,7 @@ class RepositorioDeRespuestas {
   static void marcarInventarioComoCompletado(String usuarioId, String tipoInventario) {
     final usuario = HiveService.cajaInfoUsuario.values.firstWhere(
       (user) => user.id.toString() == usuarioId,
-      orElse: () => InfoUsuario(id: -1, nombre: 'Invitado', apellido: '', rfc: '', curp: '', correo: ''),
+      orElse: () => InfoUsuario(id: "-1", nombre: 'Invitado', apellido: '', rfc: '', curp: '', correo: ''),
     );
 
 

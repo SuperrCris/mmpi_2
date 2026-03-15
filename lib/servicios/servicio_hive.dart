@@ -24,7 +24,7 @@ class HiveService {
       //Crear usuario invitado
       if (_cajaInfoUsuario!.isEmpty) {
         final usuarioInvitado = InfoUsuario(
-          id: -1,
+          id: "-1",
           nombre: 'Invitado',
           apellido: '',
           rfc: '',
@@ -63,8 +63,8 @@ class HiveService {
 
   static List<String> obtenerInventariosCompletados(String usuarioId) {
     final usuario = _cajaInfoUsuario?.values.firstWhere(
-      (user) => user.id.toString() == usuarioId,
-      orElse: () => InfoUsuario(id: -1, nombre: 'Invitado', apellido: '', rfc: '', curp: '', correo: ''),
+      (user) => user.id == usuarioId,
+      orElse: () => InfoUsuario(id: "-1", nombre: 'Invitado', apellido: '', rfc: '', curp: '', correo: ''),
     );
     return usuario?.invsCompletados ?? [];
   }

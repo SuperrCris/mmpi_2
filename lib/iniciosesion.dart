@@ -1,6 +1,9 @@
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:mmpi_2/registro.dart';
 import 'package:mmpi_2/selecinventario.dart';
+import 'package:mmpi_2/servicios/sesion_controlador.dart';
 
 class InicioSesion extends StatefulWidget {
   @override
@@ -8,46 +11,70 @@ class InicioSesion extends StatefulWidget {
 }
 
 class _InicioSesionState extends State<InicioSesion> {
-  // GlobalKey que conecta el Form con su estado interno
   final _formKey = GlobalKey<FormState>();
 
-  // Controladores para obtener el texto ingresado
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
   @override
   void dispose() {
-    // Liberar recursos cuando el widget se destruya
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  void _iniciarSesion({
-    bool enLinea = true
-    }) {
+  Future<void> _iniciarSesion({bool conSesionActual = false}) async {
+    if (FirebaseAuth.instance.currentUser != null) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => SeleccionInventario()),
+        MaterialPageRoute(builder: (_) => SeleccionInventario()),
       );
-    if (!enLinea){
-
+      print("iniciando sesión con sesión actual: ${FirebaseAuth.instance.currentUser!.email}");
+      return;
     }
-    if (_formKey.currentState!.validate()) {
-      // Si todos los campos son válidos, procesar el login
-      print('Email: ${_emailController.text}');
-      print('Password: ${_passwordController.text}');
+    print("No hay sesión actual, intentando iniciar sesión en línea...");
+    if (conSesionActual) return;
 
-
-      Future.delayed(Duration(seconds: 2));
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => SeleccionInventario()),
-      );
-    }
-
+        SesionControlador.iniciarSesionEnLinea(
+          email: _emailController.text.trim(), 
+          password: _passwordController.text.trim()).
+          then((resultado) {
+          if (resultado['exito']) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => SeleccionInventario()),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(resultado['mensaje']),
+                backgroundColor: Colors.red,),
+            );}});
   }
+    void _iniciarSesionSinConexion() {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => SeleccionInventario()),
+      );
+    }
+    
+    @override
+   void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+         _iniciarSesion(conSesionActual: true);
+    });
+
+    }
+   
+
+   void _validar(){
+     if (_formKey.currentState!.validate()) {
+      _iniciarSesion(conSesionActual: false);
+     }
+   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -89,12 +116,12 @@ class _InicioSesionState extends State<InicioSesion> {
               ),
               padding: EdgeInsets.all(16.0),
               child: Form(
-                key: _formKey, // Conecta el Form con su GlobalKey
+                key: _formKey, 
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     AutoSizeText(
-                      "MMPI-2 o SABE",
+                      "Vocacional",
                       maxFontSize: 100,
                       style: TextStyle(
                         fontSize: 24,
@@ -115,14 +142,13 @@ class _InicioSesionState extends State<InicioSesion> {
                       ),
                       keyboardType: TextInputType.text,
                       textInputAction: TextInputAction
-                          .next, // Muestra botón "Siguiente" en el teclado
-                      // validator se ejecuta cuando llamas a _formKey.currentState!.validate()
+                          .next, 
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Por favor ingresa tu email';
                         }
 
-                        return null; // null significa que la validación pasó
+                        return null; 
                       },
                     ),
 
@@ -141,7 +167,7 @@ class _InicioSesionState extends State<InicioSesion> {
                       textInputAction: TextInputAction
                           .done, // Muestra el botón "Listo" en el teclado
                       onFieldSubmitted: (_) =>
-                          _iniciarSesion(), // Se ejecuta al presionar Enter
+                         _validar(),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Por favor ingresa tu contraseña';
@@ -157,7 +183,10 @@ class _InicioSesionState extends State<InicioSesion> {
 
                     // Botón de inicio de sesión
                     ElevatedButton(
-                      onPressed: _iniciarSesion,
+                      onPressed: (){
+                      
+                        _validar();
+                      },
                       style: ElevatedButton.styleFrom(
                         minimumSize: Size(double.infinity, 50),
                       ),
@@ -168,7 +197,7 @@ class _InicioSesionState extends State<InicioSesion> {
                     ),
                     SizedBox(height: 10),
                     ElevatedButton(
-                      onPressed: _iniciarSesion,
+                      onPressed: _iniciarSesionSinConexion,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.deepOrangeAccent,
                         minimumSize: Size(double.infinity, 50),
@@ -180,7 +209,10 @@ class _InicioSesionState extends State<InicioSesion> {
                     ),
                     SizedBox(height: 10),
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => Registro())).then((_) {
+                        _iniciarSesion();
+                        });},
                       style: ElevatedButton.styleFrom(
                         minimumSize: Size(50, 50),
                         backgroundColor: Colors.amber,

@@ -1,5 +1,6 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:mmpi_2/servicios/sesion_controlador.dart';
 
 class Registro extends StatefulWidget {
   @override
@@ -7,16 +8,47 @@ class Registro extends StatefulWidget {
 }
 
 class _RegistroState extends State<Registro> {
-
-  Map<String, dynamic> datos = {
+  final Map<String, dynamic> datos = {
     'nombre': '',
     'apellido': '',
     'curp': '',
     'rfc': '',
     'correo': '',
     'clave': '',
+    'clave_confirmar': '',
   };
-  
+
+  final GlobalKey<FormState> _llaveFormulario = GlobalKey<FormState>();
+  final TextEditingController _claveController = TextEditingController();
+
+  final FocusNode _fnNombre = FocusNode();
+  final FocusNode _fnApellido = FocusNode();
+  final FocusNode _fnCurp = FocusNode();
+  final FocusNode _fnRfc = FocusNode();
+  final FocusNode _fnCorreo = FocusNode();
+  final FocusNode _fnClave = FocusNode();
+  final FocusNode _fnClaveConfirmar = FocusNode();
+
+  @override
+  void dispose() {
+    _claveController.dispose();
+    _fnNombre.dispose();
+    _fnApellido.dispose();
+    _fnCurp.dispose();
+    _fnRfc.dispose();
+    _fnCorreo.dispose();
+    _fnClave.dispose();
+    _fnClaveConfirmar.dispose();
+    super.dispose();
+  }
+
+  void _enviarFormulario() {
+    if (_llaveFormulario.currentState!.validate()) {
+      _llaveFormulario.currentState!.save();
+      iniciarSesion();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,13 +56,13 @@ class _RegistroState extends State<Registro> {
         title: Column(
           children: [
             SizedBox(height: 20),
-            Center(child: Text('MMPI-2', style: TextStyle(color: Theme.of(context).primaryColor, fontSize: 40, fontWeight: FontWeight.bold))),
+            Center(child: Text('Vocacional', style: TextStyle(color: Theme.of(context).primaryColor, fontSize: 40, fontWeight: FontWeight.bold))),
           ],
         ),
       ),
       backgroundColor: Colors.white,
       body: Center(
-        child:  Container(
+        child: Container(
           constraints: BoxConstraints(maxWidth: 400, maxHeight: 600),
           padding: EdgeInsets.symmetric(horizontal: 50, vertical: 30),
           decoration: BoxDecoration(
@@ -41,12 +73,13 @@ class _RegistroState extends State<Registro> {
                 color: Colors.grey.withOpacity(0.5),
                 spreadRadius: 5,
                 blurRadius: 7,
-                offset: Offset(0, 3), // changes position of shadow
+                offset: Offset(0, 3),
               ),
             ],
           ),
           child: SingleChildScrollView(
             child: Form(
+              key: _llaveFormulario,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 spacing: 10,
@@ -54,71 +87,137 @@ class _RegistroState extends State<Registro> {
                   AutoSizeText(
                     'Crea una cuenta',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
-                      maxLines: 1,
-                    ),
-
-                    TextField(
-                      onChanged: (value) => datos['nombre'] = value,
-                      decoration: InputDecoration(
-                        labelText: 'Nombre',
-                      ),
-                    ),
-                    TextField(
-                      onChanged: (value) => datos['apellido'] = value,
-                      decoration: InputDecoration(
-                        labelText: 'Apellido',
-                      ),
-                    ),
-                    TextField(
-                      onChanged: (value) => datos['curp'] = value,
-                      decoration: InputDecoration(
-                        labelText: 'CURP',
-                      ),
-                    ),
-                    TextField(
-                      onChanged: (value) => datos['rfc'] = value,
-                       decoration: InputDecoration(
-                        labelText: 'RFC',
-                      ),
-                    ),
-                    TextField(
-                      onChanged: (value) => datos['correo'] = value,
-                       decoration: InputDecoration(
-                        labelText: 'Correo',
-                      ),
-                    ),
-                    TextField(
-                      onChanged: (value) => datos['clave'] = value,
-                      decoration: InputDecoration(
-                        labelText: 'Contraseña',
-                      ),
-                      obscureText: true,
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        // Aquí puedes manejar el envío de los datos
-                        print(datos);
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Registro exitoso')));
-                      },
-                      child: Text('Registrar', style: TextStyle(color: Colors.white, shadows: [Shadow(offset: Offset(0, 2), blurRadius: 0.2, color: Colors.black12)],),),
-                    ),
-                  ],
+                    maxLines: 1,
+                  ),
+                  TextFormField(
+                    focusNode: _fnNombre,
+                    textInputAction: TextInputAction.next,
+                    onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(_fnApellido),
+                    onSaved: (value) => datos['nombre'] = value?.trim() ?? '',
+                    decoration: decoracion('Nombre'),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) return 'El nombre es requerido';
+                      if (value.trim().length < 2) return 'Ingresa un nombre válido';
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    focusNode: _fnApellido,
+                    textInputAction: TextInputAction.next,
+                    onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(_fnCurp),
+                    onSaved: (value) => datos['apellido'] = value?.trim() ?? '',
+                    decoration: decoracion('Apellido'),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) return 'El apellido es requerido';
+                      if (value.trim().length < 2) return 'Ingresa un apellido válido';
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    focusNode: _fnCurp,
+                    textInputAction: TextInputAction.next,
+                    onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(_fnRfc),
+                    onSaved: (value) => datos['curp'] = value?.trim().toUpperCase() ?? '',
+                    decoration: decoracion('CURP'),
+                    textCapitalization: TextCapitalization.characters,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) return 'La CURP es requerida';
+                      final curpRegex = RegExp(
+                        r'^[A-Z]{4}\d{6}[HM][A-Z]{5}[A-Z0-9]\d$',
+                        caseSensitive: false,
+                      );
+                      if (!curpRegex.hasMatch(value.trim())) return 'CURP inválida (18 caracteres, ej: ABCD010101HDFXXX01)';
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    focusNode: _fnRfc,
+                    textInputAction: TextInputAction.next,
+                    onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(_fnCorreo),
+                    onSaved: (value) => datos['rfc'] = value?.trim().toUpperCase() ?? '',
+                    decoration: decoracion('RFC'),
+                    textCapitalization: TextCapitalization.characters,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) return 'El RFC es requerido';
+                      final rfcRegex = RegExp(
+                        r'^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$',
+                        caseSensitive: false,
+                      );
+                      if (!rfcRegex.hasMatch(value.trim())) return 'RFC inválido (12-13 caracteres, ej: ABCD010101XXX)';
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    focusNode: _fnCorreo,
+                    textInputAction: TextInputAction.next,
+                    onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(_fnClave),
+                    onSaved: (value) => datos['correo'] = value?.trim() ?? '',
+                    decoration: decoracion('Correo'),
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) return 'El correo es requerido';
+                      final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+                      if (!emailRegex.hasMatch(value.trim())) return 'Ingresa un correo válido';
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    focusNode: _fnClave,
+                    controller: _claveController,
+                    textInputAction: TextInputAction.next,
+                    onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(_fnClaveConfirmar),
+                    onSaved: (value) => datos['clave'] = value ?? '',
+                    decoration: decoracion('Contraseña'),
+                    obscureText: true,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return 'La contraseña es requerida';
+                      if (value.length < 6) return 'Mínimo 6 caracteres';
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    focusNode: _fnClaveConfirmar,
+                    textInputAction: TextInputAction.done,
+                    onFieldSubmitted: (_) => _enviarFormulario(),
+                    onSaved: (value) => datos['clave_confirmar'] = value ?? '',
+                    decoration: decoracion('Confirmar Contraseña'),
+                    obscureText: true,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return 'Confirma tu contraseña';
+                      if (value != _claveController.text) return 'Las contraseñas no coinciden';
+                      return null;
+                    },
+                  ),
+                  ElevatedButton(
+                    onPressed: _enviarFormulario,
+                    child: Text('Registrar', style: TextStyle(color: Colors.white, shadows: [Shadow(offset: Offset(0, 2), blurRadius: 0.2, color: Colors.black12)])),
+                  ),
+                ],
               ),
             ),
           ),
         ),
       ),
-      );
-        }
-      
-  InputDecoration decoracion (String texto) {
+    );
+  }
+
+    void iniciarSesion() {
+    SesionControlador.registroEnLinea(
+      email: datos['correo'], password: datos['clave'], datosAdicionales: {
+        'nombre': datos['nombre'],
+        'apellido': datos['apellido'],
+        'curp': datos['curp'],
+        'rfc': datos['rfc'],
+      });
+    Navigator.pop(context);
+  }
+
+  InputDecoration decoracion(String texto) {
     return InputDecoration(
       labelText: texto,
       border: OutlineInputBorder(),
       filled: true,
       fillColor: Colors.white,
-  
     );
   }
-  
 }

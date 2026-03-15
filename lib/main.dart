@@ -1,21 +1,27 @@
-import 'dart:math';
 
+import 'dart:math';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:mmpi_2/firebase_options.dart';
+import 'package:mmpi_2/utilidades/excel.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mmpi_2/inciso.dart';
 import 'package:mmpi_2/iniciosesion.dart';
-import 'package:mmpi_2/registro.dart';
-import 'package:mmpi_2/selecinventario.dart';
 import 'package:mmpi_2/modelos/modelos.dart';
 import 'package:mmpi_2/servicios/servicios.dart';
-import 'package:mmpi_2/servicios/sesion_controlador.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
+  try
+  {print("iniciando Firebase..."); 
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);}catch (e) {
+    print("Error al inicializar Firebase: $e");
+  }
+
   try {
-    print('🚀 Iniciando aplicación MMPI-2...');
+    print('🚀 Iniciando aplicación Vocacional...');
     
     // Inicializar Hive
     await Hive.initFlutter();
@@ -280,13 +286,13 @@ List<int> respuestas = [];
 
   void cuestionarioCompleto() {
      if (!respuestas.contains(-1)){
-    final id = HiveService.cajaInfoUsuario.values.first.id.toString();
+    final id = HiveService.cajaInfoUsuario.values.first.id;
     final tipoInventario = ModalRoute.of(context)?.settings.name ?? '';
 
 
-    if (!RepositorioDeRespuestas.obtInventariosRespondidos(id)
+    if (!ControladorHive.obtInventariosRespondidos(id)
     .contains(tipoInventario)) {
-    RepositorioDeRespuestas.marcarInventarioComoCompletado(id, tipoInventario);
+    ControladorHive.marcarInventarioComoCompletado(id, tipoInventario);
    showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -324,7 +330,7 @@ List<int> respuestas = [];
         : null;
     if (usuario == null || tipo.isEmpty) return;
 
-    final guardadas = RepositorioDeRespuestas.obtRespuestasPorTipo(tipo);
+    final guardadas = ControladorHive.obtRespuestasPorTipo(tipo);
 
     setState(() {
       for (final r in guardadas) {
@@ -405,10 +411,8 @@ List<int> respuestas = [];
                       textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   onPressed: (){
-
                     verPaginas();
                   }, 
-                  
                   child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: const [
@@ -417,7 +421,36 @@ List<int> respuestas = [];
                     Text("Ver mi progreso", style: TextStyle(color: Color.fromARGB(255, 255, 255, 255), fontWeight: FontWeight.bold),)
                   ],
                  )
-                        ),]
+                        ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 19, 192, 25),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                      onPressed: () async {
+                        await ExcelUtil.crearReporteConPlantilla(
+                          {
+                            "nombre": "Cristian Escalante",
+                            "grupo": "5°A",
+                            "edad": 25,
+                            "sexo": "Masculino",
+                            "escolaridad": "Universidad",
+                            "fecha": "2024-06-15",
+                            "respuestas": respuestas,
+                          }
+                        );
+                      },
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.download, color: Colors.white),
+                          SizedBox(width: 8),
+                          Text('Exportar CSV', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                  ]
                ),
              ),
          
@@ -661,8 +694,8 @@ List<int> respuestas = [];
         ? HiveService.cajaInfoUsuario.values.first
         : null;
     if (usuario != null && tipo.isNotEmpty) {
-      RepositorioDeRespuestas.guardarRespuesta(
-        usuarioId: usuario.id.toString(),
+      ControladorHive.guardarRespuesta(
+        usuarioId: usuario.id,
         preguntaID: preguntaIndex,
         respuesta: incisoIndex.toString(),
         tipoInventario: tipo,
@@ -672,6 +705,7 @@ List<int> respuestas = [];
     }
   }
 
+  
   @override
   void dispose() {
     pageController.dispose();

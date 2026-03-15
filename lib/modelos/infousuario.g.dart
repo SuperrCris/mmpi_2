@@ -17,7 +17,7 @@ class InfoUsuarioAdapter extends TypeAdapter<InfoUsuario> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return InfoUsuario(
-      id: fields[0] as int,
+      id: fields[0] as String,
       nombre: fields[1] as String,
       apellido: fields[2] as String,
       rfc: fields[3] as String,
