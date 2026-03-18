@@ -6,22 +6,6 @@ class ExcelUtil {
 
 
 
-
-static void crearReporte() {
-  var excel = Excel.createExcel(); 
-  Sheet sheetObject = excel['Sheet1'];
-  CellStyle cellStyle = CellStyle(
-    backgroundColorHex: ExcelColor.fromHexString("#1AFF1A"),
-    fontFamily: getFontFamily(FontFamily.Calibri),
-    horizontalAlign: HorizontalAlign.Center,
-  );
-  
-  sheetObject.cell(CellIndex.indexByString("A1")).value = TextCellValue("Hola mundo"); 
-  sheetObject.cell(CellIndex.indexByString("A1")).cellStyle = cellStyle;
-
-  excel.save(fileName: 'My_Excel_File_Name.xlsx');
-
-}
 static Future<void> crearReporteConPlantilla(Map<String, dynamic> info) async {
   ByteData data = await rootBundle.load('recursos/plantilla.xlsx');
   var excel = Excel.decodeBytes(data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));

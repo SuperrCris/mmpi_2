@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mmpi_2/servicios/sesion_controlador.dart';
 import 'package:mmpi_2/servicios/controlador_hive.dart';
+import 'package:mmpi_2/utilidades/repositoriopreguntas.dart';
 
 class SeleccionInventario extends StatefulWidget {
   @override
@@ -20,7 +21,7 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
           builder: (context) => AlertDialog(
             title: Text("Estas iniciando como invitado, lo que significa que:"),
             content: Text(
-              "• Tus respuestas solo se guardan en tu computadora \n • No podrás acceder a tus resultados desde otro dispositivo\n • El registro quedará pendiente \n • Respalda tus resultados siempre que puedas",
+              "• Tus respuestas solo se guardan en tu computadora \n • No podrás acceder a tus resultados desde otro dispositivo\n",
             ),
             actionsAlignment: MainAxisAlignment.center,
             actions: [
@@ -37,11 +38,9 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
 
   @override
   Widget build(BuildContext context) {
-    final usuarioId = SesionControlador().usuarioId;
     Map<String, dynamic> inventarios = {
       "Inventario de autoevaluacion de aptitudes": {
         "imagen": "recursos/cerebro.png",
-        "bloqueado": false,
         "colores": [
           Color.fromARGB(255, 0, 177, 153),
           Color.fromARGB(255, 1, 132, 255),
@@ -50,7 +49,6 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
       },
       "Inventario de interes ocupacional": {
         "imagen": "recursos/tridente.png",
-        "bloqueado": ControladorHive.obtenerCantidadRespuestasUsuarioYTipo(usuarioId, "/inventario_autoevaluacion_aptitudes") < 120,
         "colores": [
           Color.fromARGB(255, 255, 132, 0),
           Color.fromARGB(255, 255, 0, 0),
@@ -60,7 +58,6 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
       },
       "Inventario de preferencias universitarias": {
         "imagen": "recursos/libro.png",
-        "bloqueado": ControladorHive.obtenerCantidadRespuestasUsuarioYTipo(usuarioId, "/inventario_interes_ocupacional") < 120,
         "colores": [
           Color.fromARGB(255, 255, 0, 191),
           Color.fromARGB(255, 140, 0, 255),
@@ -88,16 +85,21 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 24.0),
-                  child: Text(
-                    "¡Hola, ${SesionControlador().nombreUsuario}!",
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.deepPurple,
+                GestureDetector(
+                  onTap: () {
+                    print("Usuario '${SesionControlador().nombreUsuario}' ha iniciado sesión con ID: ${SesionControlador().idUsuario}, con inventarios completados: ${SesionControlador().invsCompletados}");
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24.0),
+                    child: Text(
+                      "¡Hola, ${SesionControlador().nombreUsuario}!",
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepPurple,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
                   ),
                 ),
                 Wrap(
@@ -107,13 +109,14 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
                   children: inventarios.keys.map((inventario) {
                 return GestureDetector(
                   onTap: () {
-                    if (!inventarios[inventario]["bloqueado"]) {
-                      Navigator.pushNamed(
-                        context,
-                        inventarios[inventario]["ruta"],
-                        arguments: {"info": <String, dynamic>{...inventarios[inventario]!, "titulo": inventario}},
-                      ).then((_) => setState(() {}));
-                    }
+                    Navigator.pushNamed(
+                      context,
+                      inventarios[inventario]["ruta"],
+                      arguments: {"info": <String, dynamic>{...inventarios[inventario]!, "titulo": inventario}},
+                    ).then((_) => setState(() {
+
+                      print("${ControladorHive.obtenerCantidadRespuestasUsuarioYTipo(SesionControlador().usuarioId, inventarios[inventario]["ruta"])}");
+                    }));
                   },
                   child: TweenAnimationBuilder<double>(
                     tween: Tween(begin: 0, end: 1),
@@ -133,17 +136,13 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
                       ),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: inventarios[inventario]["bloqueado"]
-                              ? [Colors.grey, Colors.blueGrey]
-                              : inventarios[inventario]["colores"],
+                          colors: inventarios[inventario]["colores"],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: inventarios[inventario]["bloqueado"]
-                                ? Colors.grey.withOpacity(0.5)
-                                : inventarios[inventario]["colores"][0].withOpacity(0.5),
+                            color: inventarios[inventario]["colores"][0].withOpacity(0.5),
                             
                             spreadRadius: 5,
                             blurRadius: 7,
@@ -155,8 +154,24 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
                       child: Stack(
                         alignment: Alignment.bottomCenter,
                         children: [
-                          if (!inventarios[inventario]["bloqueado"])
-                            Positioned(
+                          Positioned(
+                            top: 10,
+                            left: 10,
+                            child: Builder(builder: (context) {
+                              final ruta = inventarios[inventario]["ruta"] as String;
+                              final uid = SesionControlador().usuarioId;
+                              final completado = ControladorHive.obtenerCantidadRespuestasUsuarioYTipo(uid, ruta) >= tamanoInventario(ruta);
+                              if (!completado) return const SizedBox();
+                              final pendiente = ControladorHive.obtenerRespuestasNoSincronizadas()
+                                  .any((r) => r.usuarioId == uid && r.tipo == ruta);
+                              return Icon(
+                                pendiente ? Icons.cloud_off : Icons.cloud_done,
+                                size: 100,
+                                color: Colors.white.withOpacity(0.8),
+                              );
+                            }),
+                          ),
+                          Positioned(
                               top: 250,
                               child: Container(
                                 height: 20,
@@ -174,7 +189,7 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
                                 ),
                                 child: Center(
                                   child: AutoSizeText(
-                                    "${ControladorHive.obtenerCantidadRespuestasUsuarioYTipo(SesionControlador().usuarioId, inventarios[inventario]["ruta"])} / 120",
+                                    "${ControladorHive.obtenerCantidadRespuestasUsuarioYTipo(SesionControlador().usuarioId, inventarios[inventario]["ruta"])} / ${tamanoInventario(inventarios[inventario]["ruta"])}",
                                     style: TextStyle(
                                       color:
                                           inventarios[inventario]["colores"][1],
@@ -211,25 +226,104 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
                                 shape: BoxShape.circle,
                               ),
                               padding: EdgeInsets.all(20),
-                              child: inventarios[inventario]["bloqueado"]
-                                  ? Icon(
-                                      Icons.lock,
-                                      size: 150,
-                                      color: Colors.grey,
-                                    )
-                                  : Hero(
+                              child: Hero(
                                       tag: inventarios[inventario]["ruta"],
                                     child: Image.asset(
                                         width: 150,
                                         height: 150,
                                         inventarios[inventario]["imagen"] ??
                                             "recursos/cerebro.png",
-                                        color:
-                                            inventarios[inventario]["bloqueado"]
-                                            ? Colors.grey
-                                            : inventarios[inventario]["colores"][0],
+                                        color: inventarios[inventario]["colores"][0],
                                       ),
                                   ),
+                            ),
+                          ),
+                          Positioned(
+                            top: 10,
+                            right: 10,
+                            child: PopupMenuButton<String>(
+                              tooltip: "Opciones",
+                              icon: Icon(Icons.more_vert, color: Colors.white),
+                              style: ButtonStyle(
+                                backgroundColor: WidgetStateProperty.all(Colors.black.withOpacity(0.5)),
+                                shape: WidgetStateProperty.all(const CircleBorder()),
+                              ),
+                              itemBuilder: (context) {
+                                final ruta = inventarios[inventario]['ruta'] as String;
+                                final uid = SesionControlador().usuarioId;
+                                final completado = ControladorHive.obtenerCantidadRespuestasUsuarioYTipo(uid, ruta) >= tamanoInventario(ruta);
+                                return [
+                                completado ?
+                                    PopupMenuItem(
+                                      value: 'guardar',
+                                      child: Row(children: [
+                                        Icon(Icons.cloud_upload_outlined),
+                                        SizedBox(width: 8),
+                                        Text('Guardar en la nube'),
+                                      ]),
+                                    ) : PopupMenuItem(
+                                      value: 'guardarinvalido',
+                                      child: Row(children: [
+                                        Icon(Icons.cloud_upload_outlined, color: Colors.grey),
+                                        SizedBox(width: 8),
+                                        Text('Guardar en la nube', style: TextStyle(color: Colors.grey)),
+                                      ]),
+                                    ),
+                                  PopupMenuItem(
+                                    value: 'reiniciar',
+                                    child: Row(children: [
+                                      Icon(Icons.refresh, color: Colors.red),
+                                      SizedBox(width: 8),
+                                      Text('Reiniciar', style: TextStyle(color: Colors.red)),
+                                    ]),
+                                  ),
+                                ];
+                              },
+                              onSelected: (value) async {
+                                final ruta = inventarios[inventario]['ruta'] as String;
+                                final uid = SesionControlador().usuarioId;
+                                switch (value) {
+                                  case 'guardarinvalido':
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Podrás guardar en la nube una vez que completes las ${tamanoInventario(ruta)} preguntas de este inventario. Actualmente has completado ${ControladorHive.obtenerCantidadRespuestasUsuarioYTipo(uid, ruta)}.')),
+                                    );
+                                    break;
+                                    case "guardar":
+                                        final resultado = await SesionControlador.sincronizarInventario(uid, ruta);
+                                        setState(() {});
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text(resultado['mensaje'])));
+                                      break;
+                                    case "reiniciar":
+                                       final confirm = await showDialog<bool>(
+                                        context: context,
+                                        builder: (ctx) => AlertDialog(
+                                          title: Text('Reiniciar inventario'),
+                                          content: Text('¿Estás seguro? Se borrarán todas las respuestas guardadas de este inventario.'),
+                                          actionsAlignment: MainAxisAlignment.center,
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(ctx, false),
+                                              child: Text('Cancelar'),
+                                            ),
+                                            ElevatedButton(
+                                              onPressed: () => Navigator.pop(ctx, true),
+                                              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                              child: Text('Reiniciar', style: TextStyle(color: Colors.white)),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                      if (confirm == true) {
+                                        await SesionControlador.reiniciarInventario(uid, ruta);
+                                        setState(() {});
+                                      }
+                                      break;
+                                }
+                             
+                               
+                  
+                              },
                             ),
                           ),
                         ],
@@ -247,3 +341,5 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
     );
   }
 }
+
+

@@ -20,7 +20,7 @@ class HiveService {
       _cajaInfoUsuario = await Hive.openBox<InfoUsuario>(_nombreCajaInfoUsuario);
       _cajaOpciones = await Hive.openBox<dynamic>(_nombreCajaOpciones);
 
- 
+
       //Crear usuario invitado
       if (_cajaInfoUsuario!.isEmpty) {
         final usuarioInvitado = InfoUsuario(

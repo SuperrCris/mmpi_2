@@ -1,5 +1,6 @@
 import 'package:mmpi_2/modelos/modelos.dart';
 import 'package:mmpi_2/servicios/servicio_hive.dart';
+import 'package:mmpi_2/utilidades/repositoriopreguntas.dart';
 
 class ControladorHive {
 
@@ -12,7 +13,8 @@ static Future<void> crearUsuario(InfoUsuario usuario) async {
     }
   }
 
-static InfoUsuario? obtenerInfoUsuario(String usuarioId) {
+//Busqueda del usuario en Hive por ID, si no se encuentra retorna un usuario con id -2 
+static InfoUsuario obtenerInfoUsuario(String usuarioId) {
     return HiveService.cajaInfoUsuario.values
         .cast<InfoUsuario>()
         .firstWhere((user) => user.id == usuarioId, orElse: () => InfoUsuario(id: "-1", nombre: 'Invitado', apellido: '', rfc: '', curp: '', correo: ''));
@@ -53,7 +55,8 @@ static InfoUsuario? obtenerInfoUsuario(String usuarioId) {
       respuesta: respuesta,
       preguntaID: preguntaID,
       usuarioId: usuarioId,
-      tipo: tipoInventario
+      tipo: tipoInventario,
+      sincronizado: false,
     );
 
     final key = '${usuarioId}_${tipoInventario}_$preguntaID';
@@ -95,24 +98,14 @@ static InfoUsuario? obtenerInfoUsuario(String usuarioId) {
 
       if (!usuario.invsCompletados.contains(tipoInventario)) {
         usuario.invsCompletados.add(tipoInventario);
-        usuario.save();
         print('✅ Inventario "$tipoInventario" marcado como completado para el usuario ${usuario.nombre}');
       } else {
         print('ℹ️ El inventario "$tipoInventario" ya estaba marcado como completado para el usuario ${usuario.nombre}');
       }
+       usuario.save();
     } 
     
   
-
-  static Future<void> marcarRespuestasComoSincronizadas(List<int> responseIds) async {
-    for (final id in responseIds) {
-      final response = HiveService.cajaRespuestas.get(id);
-      if (response != null) {
-        response.sincronizado = true;
-        await HiveService.cajaRespuestas.put(id, response);
-      }
-    }
-  }
 
 
   /// Marcar respuesta como sincronizada
@@ -155,7 +148,7 @@ static InfoUsuario? obtenerInfoUsuario(String usuarioId) {
         .where((respuesta) => respuesta.usuarioId == usuarioId && respuesta.tipo == tipoInventario)
         .toList();
 
-    for (int i = 0; i < 120; i++) {
+    for (int i = 0; i < tamanoInventario(tipoInventario); i++) {
       if (!respuestasUsuario.any((respuesta) => respuesta.preguntaID == i)) {
         return i; // Retorna el ID de la primera pregunta sin responder
       }
@@ -164,8 +157,48 @@ static InfoUsuario? obtenerInfoUsuario(String usuarioId) {
   }
 
 
+  /// Construir mapa de respuestas pendientes de sincronizar para Firebase
+  static Map<String, dynamic> obtenerMapaRespuestasPendientes(String usuarioId, String tipoInventario) {
+    final pendientes = HiveService.cajaRespuestas.values
+        .cast<Respuestas>()
+        .where((r) => r.usuarioId == usuarioId && r.tipo == tipoInventario && !r.sincronizado)
+        .toList();
+    return { for (final r in pendientes) r.preguntaID.toString(): int.tryParse(r.respuesta) ?? -1 };
+  }
 
+  /// Marcar todas las respuestas de un inventario como sincronizadas
+  static Future<void> marcarInventarioSincronizado(String usuarioId, String tipoInventario) async {
+    final caja = HiveService.cajaRespuestas;
+    for (final key in caja.keys) {
+      final r = caja.get(key);
+      if (r != null && r.usuarioId == usuarioId && r.tipo == tipoInventario && !r.sincronizado) {
+        r.sincronizado = true;
+        await r.save();
+      }
+    }
+  }
 
+  /// Borrar todas las respuestas de un inventario y desmarcarlo como completado
+  static Future<void> reiniciarInventario(String usuarioId, String tipoInventario) async {
+    final caja = HiveService.cajaRespuestas;
+    final keysToDelete = caja.keys
+        .where((key) {
+          final r = caja.get(key);
+          return r != null && r.usuarioId == usuarioId && r.tipo == tipoInventario;
+        })
+        .toList();
+    for (final key in keysToDelete) {
+      await caja.delete(key);
+    }
+    final usuario = HiveService.cajaInfoUsuario.values.firstWhere(
+      (user) => user.id == usuarioId,
+ );
+    if (usuario.id != '-1') {
+      print("Borrando inventario '$tipoInventario' para el usuario ${usuario.nombre} con ID ${usuario.id}");
+      usuario.invsCompletados.remove(tipoInventario);
+      await usuario.save();
+    }
+  }
 
   /// Limpiar datos de desarrollo
   static Future<void> clearAllData() async {
