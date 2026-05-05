@@ -16,11 +16,6 @@ class SesionControlador {
   List<String> invsCompletados = [];
   Map<String, dynamic> datosUsuario = {};
 
-
-
-
-
-
   static final SesionControlador _sesioncontrolador = SesionControlador._internal();
   SesionControlador._internal();
  
@@ -153,6 +148,72 @@ static Future<List<int>?> obtenerRespuestas(String cuestionarioId) async {
   }
 }
 
+static Future<List<String>> obtenerInventariosCompletados(String usuarioId) async {
+  List<String> normalizar(List<String> lista) =>
+      lista.map((s) => s.startsWith('/') ? s : '/$s').toList();
+
+  final hive = normalizar(ControladorHive.obtInventariosRespondidos(usuarioId));
+  if (FirebaseAuth.instance.currentUser != null) {
+    try {
+      final doc = await FirebaseFirestore.instance.collection('usuarios').doc(usuarioId).get();
+      if (doc.exists) {
+        final fb = normalizar(List<String>.from(doc.data()?['invsCompletados'] ?? []));
+        for (final tipo in fb) {
+          if (!hive.contains(tipo)) {
+            ControladorHive.marcarInventarioComoCompletado(usuarioId, tipo);
+          }
+        }
+        return {...hive, ...fb}.toList();
+      }
+    } catch (_) {}
+  }
+  return hive;
+}
+
+static Future<int> obtenerCantidadRespuestasFirebase(String tipoInventario) async {
+  if (FirebaseAuth.instance.currentUser == null) return 0;
+  try {
+    final doc = await FirebaseFirestore.instance
+        .collection('cuestionarios')
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .collection(tipoInventario.replaceAll('/', ''))
+        .doc('respuestas')
+        .get();
+    if (!doc.exists) return 0;
+    final data = doc.data()!;
+    final respuestas = data['respuestas'];
+    if (respuestas is List) return respuestas.length;
+    if (respuestas is Map) return respuestas.length;
+    return 0;
+  } catch (e) {
+    return 0;
+  }
+}
+
+static Future<bool> descargarRespuestasDeFirebase(String usuarioId, String tipoInventario) async {
+  if (FirebaseAuth.instance.currentUser == null) return false;
+  try {
+    final respuestas = await obtenerRespuestas(tipoInventario.replaceAll('/', ''));
+    if (respuestas == null || respuestas.isEmpty) return false;
+
+    for (int i = 0; i < respuestas.length; i++) {
+      await ControladorHive.guardarRespuesta(
+        usuarioId: usuarioId,
+        preguntaID: i,
+        respuesta: respuestas[i].toString(),
+        tipoInventario: tipoInventario,
+        sincronizado: true,
+      );
+    }
+    ControladorHive.marcarInventarioComoCompletado(usuarioId, tipoInventario);
+    print("⬇️ Respuestas de '$tipoInventario' descargadas desde Firebase (${respuestas.length}).");
+    return true;
+  } catch (e) {
+    print("Error al descargar respuestas de Firebase: ${e.toString()}");
+    return false;
+  }
+}
+
 static Future<void> reiniciarInventario(String usuarioId, String tipoInventario) async {
   await ControladorHive.reiniciarInventario(usuarioId, tipoInventario);
   if (FirebaseAuth.instance.currentUser != null) {
@@ -163,6 +224,10 @@ static Future<void> reiniciarInventario(String usuarioId, String tipoInventario)
           .collection(tipoInventario.replaceAll('/', ''))
           .doc('respuestas')
           .delete();
+      await FirebaseFirestore.instance
+          .collection('usuarios')
+          .doc(FirebaseAuth.instance.currentUser!.uid)
+          .update({'invsCompletados': FieldValue.arrayRemove([tipoInventario.replaceAll('/', '')])}); 
       print("🗑️ Inventario '$tipoInventario' eliminado de Firebase.");
     } catch (e) {
       print("Error al eliminar de Firebase: ${e.toString()}");

@@ -201,15 +201,22 @@ class _RegistroState extends State<Registro> {
     );
   }
 
-    void iniciarSesion() {
-    SesionControlador.registroEnLinea(
+  void iniciarSesion() async {
+    final resultado = await SesionControlador.registroEnLinea(
       email: datos['correo'], password: datos['clave'], datosAdicionales: {
         'nombre': datos['nombre'],
         'apellido': datos['apellido'],
         'curp': datos['curp'],
         'rfc': datos['rfc'],
       });
-    Navigator.pop(context);
+    if (!mounted) return;
+    if (resultado['exito']) {
+      Navigator.pushReplacementNamed(context, '/seleccion_inventario');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(resultado['mensaje']), backgroundColor: Colors.red),
+      );
+    }
   }
 
   InputDecoration decoracion(String texto) {

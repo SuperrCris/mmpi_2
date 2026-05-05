@@ -4,8 +4,6 @@ import 'package:flutter/services.dart' show ByteData, rootBundle;
 
 class ExcelUtil {
 
-
-
 static Future<void> crearReporteConPlantilla(Map<String, dynamic> info) async {
   ByteData data = await rootBundle.load('recursos/plantilla.xlsx');
   var excel = Excel.decodeBytes(data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));

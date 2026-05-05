@@ -41,27 +41,24 @@ static InfoUsuario obtenerInfoUsuario(String usuarioId) {
   
 
 
-
-  // === RESPUESTAS ===
-
   /// Guardar respuesta del usuario
   static Future<Respuestas> guardarRespuesta({
     required String usuarioId,
     required int preguntaID,
     required String respuesta,
     required String tipoInventario,
+    bool sincronizado = false,
   }) async {
     final res = Respuestas(
       respuesta: respuesta,
       preguntaID: preguntaID,
       usuarioId: usuarioId,
       tipo: tipoInventario,
-      sincronizado: false,
+      sincronizado: sincronizado,
     );
 
     final key = '${usuarioId}_${tipoInventario}_$preguntaID';
     await HiveService.cajaRespuestas.put(key, res);
-
 
     print('💾 Respuesta guardada: [${tipoInventario}] Pregunta${preguntaID} = $respuesta');
     return res;
@@ -87,6 +84,20 @@ static InfoUsuario obtenerInfoUsuario(String usuarioId) {
     } else {
       return [];
     }
+  }
+
+  static List<Respuestas> obtenerTodasLasRespuestas(String idUsuario) {
+    final todas = HiveService.cajaRespuestas.values.cast<Respuestas>().toList();
+    print('📦 Total de respuestas en Hive: ${todas.length}');
+    final idsEncontrados = todas.map((r) => r.usuarioId).toSet();
+    print('🔑 IDs de usuario almacenados: $idsEncontrados');
+
+    final respuestas = todas.where((r) => r.usuarioId == idUsuario).toList();
+    print('📊 Respuestas para el usuario $idUsuario: ${respuestas.length}');
+    for (final r in respuestas) {
+      print(' - [${r.tipo}] PreguntaID: ${r.preguntaID}, Respuesta: ${r.respuesta}, Sincronizado: ${r.sincronizado}');
+    }
+    return respuestas;
   }
 
   static void marcarInventarioComoCompletado(String usuarioId, String tipoInventario) {
@@ -218,9 +229,3 @@ static InfoUsuario obtenerInfoUsuario(String usuarioId) {
   }
 }
 
-// Extensión para firstOrNull (si no está disponible en tu versión de Dart)
-extension IterableExtension<T> on Iterable<T> {
-  T? get firstOrNull {
-    return isEmpty ? null : first;
-  }
-}

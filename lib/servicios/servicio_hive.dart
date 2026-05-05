@@ -100,7 +100,7 @@ class HiveService {
     await _cajaOpciones?.put(key, value);
   }
 
-  // Verificar si es la primera vez que se ejecuta la app
+   
   static dynamic get isFirstRun {
     return getSetting('primeraEjecucion', defaultValue: true);
   }

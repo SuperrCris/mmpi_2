@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:mmpi_2/firebase_options.dart';
+import 'package:mmpi_2/servicios/tema_controlador.dart';
 import 'package:mmpi_2/utilidades/excel.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -12,6 +13,7 @@ import 'package:mmpi_2/iniciosesion.dart';
 import 'package:mmpi_2/modelos/modelos.dart';
 import 'package:mmpi_2/servicios/servicios.dart';
 import 'package:mmpi_2/servicios/sesion_controlador.dart';
+import 'package:mmpi_2/selecinventario.dart';
 import 'package:mmpi_2/utilidades/repositoriopreguntas.dart';
 
 void main() async {
@@ -56,12 +58,17 @@ class MMPIApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      routes: {
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: TemaControlador.modoTema,
+      builder: (context, themeMode, _) {
+        return MaterialApp(
+          themeMode: themeMode,
+          routes: {
         "/inventario_autoevaluacion_aptitudes": (context) => _MMPI(),
         "/inventario_interes_ocupacional": (context) => _MMPI(),
         "/inventario_preferencias_universitarias": (context) => _MMPI(),
         "/inicio_sesion": (context) => InicioSesion(),
+        "/seleccion_inventario": (context) => SeleccionInventario(),
       },
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -120,9 +127,70 @@ class MMPIApp extends StatelessWidget {
           backgroundColor: Color.fromARGB(255, 255, 255, 255),
           elevation: 0,
         ),
-        
       ),
-      home: InicioSesion(), //SeleccionInventario(), // _MMPI() //Registro(),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        dialogTheme: DialogThemeData(
+          backgroundColor: const Color(0xFF1E2740),
+          titleTextStyle: TextStyle(
+            color: const Color.fromARGB(255, 100, 180, 255),
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+          contentTextStyle: TextStyle(
+            color: const Color.fromARGB(255, 150, 200, 255),
+            fontSize: 16,
+          ),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color.fromARGB(255, 0, 202, 27),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+        ),
+        bottomSheetTheme: const BottomSheetThemeData(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+        ),
+        textTheme: const TextTheme(
+          bodyMedium: TextStyle(color: Color.fromARGB(255, 100, 180, 255), fontSize: 16),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: const Color(0xFF1E2740),
+          focusColor: const Color(0xFF1E2740),
+          floatingLabelAlignment: FloatingLabelAlignment.center,
+          floatingLabelStyle: const TextStyle(
+            color: Color.fromARGB(255, 100, 180, 255),
+            fontWeight: FontWeight.bold,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Color.fromARGB(255, 100, 180, 255), width: 2),
+            borderRadius: BorderRadius.circular(90),
+          ),
+          border: OutlineInputBorder(
+            borderSide: const BorderSide(color: Color.fromARGB(255, 0, 140, 255), width: 2),
+            borderRadius: BorderRadius.circular(90),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+        ),
+        primaryColor: const Color.fromARGB(255, 58, 123, 183),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF12192B),
+          elevation: 0,
+        ),
+        scaffoldBackgroundColor: const Color(0xFF0D1421),
+        cardColor: const Color(0xFF1E2740),
+        colorScheme: const ColorScheme.dark(
+          primary: Color.fromARGB(255, 58, 123, 183),
+          secondary: Color.fromARGB(255, 0, 177, 153),
+          surface: Color(0xFF1E2740),
+        ),
+      ),
+      home: InicioSesion(),
+        );
+      },
     );
   }
 }
@@ -217,14 +285,38 @@ List<int> respuestas = [];
      cuestionarioCompleto();}
 
   void _cargarRespuestasGuardadas() {
+    _cargarRespuestasAsync();
+  }
+
+  Future<void> _cargarRespuestasAsync() async {
     final tipo = ModalRoute.of(context)?.settings.name ?? '';
     final uid = SesionControlador().usuarioId;
     if (tipo.isEmpty) return;
 
-    final guardadas = HiveService.cajaRespuestas.values
+    var guardadas = HiveService.cajaRespuestas.values
         .cast<Respuestas>()
         .where((r) => r.tipo == tipo && r.usuarioId == uid)
         .toList();
+
+    final localCount = guardadas.length;
+    final cloudCount = await SesionControlador.obtenerCantidadRespuestasFirebase(tipo);
+    print('🔄 Local: $localCount respuestas | Nube: $cloudCount respuestas para $tipo');
+
+    if (cloudCount > localCount) {
+      print('⬇️ La nube tiene más respuestas ($cloudCount > $localCount), descargando...');
+      final descargado = await SesionControlador.descargarRespuestasDeFirebase(uid, tipo);
+      if (descargado) {
+        guardadas = HiveService.cajaRespuestas.values
+            .cast<Respuestas>()
+            .where((r) => r.tipo == tipo && r.usuarioId == uid)
+            .toList();
+      }
+    } else if (localCount == 0) {
+      // Sin datos ni locales ni en nube
+      print('ℹ️ Sin respuestas previas para $tipo');
+    } else {
+      print('✅ Local está actualizado ($localCount >= $cloudCount)');
+    }
 
     setState(() {
       for (final r in guardadas) {
@@ -268,26 +360,7 @@ List<int> respuestas = [];
 
   List<Color> coloresBarra = info["colores"] as List<Color>;
    ancho = MediaQuery.of(context).size.width;
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primarySwatch: Colors.purple,
-          appBarTheme:  AppBarTheme(
-            backgroundColor: coloresBarra[1],
-            elevation: 0,
-            child: Container(
-              height: 100,
-              width: 100,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(colors:  [
-                 coloresBarra[0],
-                  coloresBarra[1],
-                ], begin: Alignment.centerLeft, end: Alignment.centerRight),
-              )
-            ),
-          ),
-        ),
-      home: Scaffold(
+    return Scaffold(
         bottomNavigationBar: 
 
            
@@ -347,7 +420,9 @@ List<int> respuestas = [];
                ),
              ),
          
-        appBar: AppBar(title: Row (
+        appBar: AppBar(
+          backgroundColor: coloresBarra[1],
+          title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children:  [
             ElevatedButton(
@@ -456,7 +531,7 @@ List<int> respuestas = [];
             ),
         
       
-    ),);
+    );
   }
 
   void siguientePagina() {
@@ -471,7 +546,6 @@ List<int> respuestas = [];
     showDialog(
       context: context, 
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
         title: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -537,7 +611,7 @@ List<int> respuestas = [];
                                   maxFontSize: 100,
                                     style: TextStyle(
                                       fontSize: 48,
-                                      color: const Color.fromARGB(255, 255, 255, 255), 
+                                      color: TemaControlador.esModoOscuro ? Colors.white : Colors.black,
                                       fontWeight: FontWeight.bold,
                                       shadows: [
                                         Shadow(
@@ -655,11 +729,18 @@ Widget _pagina(
              Flexible(
               flex: 1,
                child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                 alignment: Alignment.center,
-                
-                 
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  gradient: LinearGradient(
+                    colors: [Colors.black12, Colors.black26],
+                    end: Alignment.topCenter,
+                    begin: Alignment.bottomCenter,
+
+                  ),
+                ),
                    child: Wrap(
-                      
                       alignment: WrapAlignment.center,
                       spacing: 10,
                       runSpacing: 5,
