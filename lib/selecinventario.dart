@@ -1,7 +1,6 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/adapters.dart';
 import 'package:mmpi_2/servicios/sesion_controlador.dart';
 import 'package:mmpi_2/servicios/controlador_hive.dart';
 import 'package:mmpi_2/servicios/tema_controlador.dart';
@@ -64,7 +63,7 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
         ],
         "ruta": "/inventario_interes_ocupacional",
       },
-      "Inventario de preferencias universitarias": {
+      "Inventario de preferencias universitarias 1": {
         "imagen": "recursos/libro.png",
         "colores": [
           Color.fromARGB(255, 255, 0, 191),
@@ -72,12 +71,24 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
         ],
         "ruta": "/inventario_preferencias_universitarias",
       },
+            "Inventario de preferencias universitarias 2": {
+        "imagen": "recursos/libro.png",
+        "colores": [
+          Color.fromARGB(255, 20, 143, 192),
+          Color.fromARGB(255, 0, 140, 255),
+        ],
+        "ruta": "/inventario_preferencias_universitarias2",
+      },
     };
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 58, 123, 183),
       body: Builder(builder: (context) {
-
         final modoOscuro = Theme.of(context).brightness == Brightness.dark;
+        final screenWidth = MediaQuery.of(context).size.width;
+        final screenHeight = MediaQuery.of(context).size.height;
+        final isMobile = screenWidth < 600;
+        final isLandscapeMobile = screenHeight < 500 && screenWidth > screenHeight;
+        final cardWidth = isMobile ? screenWidth - 56 : 350.0;
         return Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -96,10 +107,12 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
         ),
         child: Container(
             alignment: Alignment.center,
-             margin: const EdgeInsets.all(50.0),
+             margin: 
+             isLandscapeMobile ? EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0) :
+             EdgeInsets.all(isMobile ? 12.0 : 50.0),
             decoration: BoxDecoration(
               color: modoOscuro ? const Color(0xFF1A2540) : const Color.fromARGB(255, 255, 255, 255),
-              borderRadius: BorderRadius.circular(45),
+              borderRadius: BorderRadius.circular(10),
              
               boxShadow: [
                 BoxShadow(
@@ -110,7 +123,8 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
                 ),
               ],
             ),
-            padding: const EdgeInsets.only(top: 30.0, left: 50.0, right: 50.0, bottom: 30.0),
+            padding: 
+            isLandscapeMobile ? EdgeInsets.all(8.0) : EdgeInsets.only(top: 30.0, left: isMobile ? 10.0 : 20.0, right: isMobile ? 10.0 : 20.0, bottom: 30.0),
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -175,21 +189,16 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
         
                           GestureDetector(
                             onTap: () => ControladorHive.obtenerTodasLasRespuestas( SesionControlador().usuarioId),
-                            child: Card(
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              child: Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child: Text(
+                            child: AutoSizeText(
                                   "Selecciona un inventario para comenzar o continuar con tu evaluación.",
                                   style: TextStyle(
                                     fontSize: 16,
                                     color: const Color.fromARGB(255, 58, 123, 183),
                                   ),
                                   textAlign: TextAlign.center,
-                                ),
-                              ),
-                            ),
-                          ),
+                                  maxLines: 2,)
+                            
+                            )
                         ],
                       ),
                     ),
@@ -219,9 +228,10 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
                         );
                       },
                       child: Container(
+                        width: isMobile ? cardWidth : null,
                         constraints: BoxConstraints(
-                          minWidth: 350,
-                          minHeight: 400,
+                          minWidth: isLandscapeMobile ? 50 : (isMobile ? 0 : 350),
+                          minHeight: isLandscapeMobile ? 100 : (isMobile ? 300 : 400),
                         ),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
@@ -260,21 +270,51 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
                                 );
                               }),
                             ),
-                            Positioned(
-                                top: 250,
-                                child: Container(
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                SizedBox(height: isLandscapeMobile ? 8 : (isMobile ? 16 : 20)),
+                                Container(
+                                  constraints: BoxConstraints(
+                                    maxWidth: isLandscapeMobile ? 100 : (isMobile ? 150 : 250),
+                                    minWidth: isLandscapeMobile ? 100 : (isMobile ? 150 : 250),
+                                  ),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  padding: EdgeInsets.all(isLandscapeMobile ? 8 : (isMobile ? 12 : 20)),
+                                  child: Hero(
+                                    tag: inventarios[inventario]["ruta"],
+                                    child: Image.asset(
+                                      inventarios[inventario]["imagen"] ?? "recursos/cerebro.png",
+                                      width: isLandscapeMobile ? 70 : (isMobile ? 100 : 150),
+                                      height: isLandscapeMobile ? 70 : (isMobile ? 100 : 150),
+                                      color: inventarios[inventario]["colores"][0],
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                Container(
+                                  width: 200,
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: AutoSizeText(
+                                    inventario,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 24,
+                                    ),
+                                    maxLines: 3,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                Container(
                                   height: 20,
                                   width: 100,
                                   decoration: BoxDecoration(
-                                    color: const Color.fromARGB(
-                                      255,
-                                      255,
-                                      255,
-                                      255,
-                                    ),
-                                    borderRadius: BorderRadius.all(
-                                      Radius.circular(45),
-                                    ),
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.all(Radius.circular(45)),
                                   ),
                                   child: Center(
                                     child: AutoSizeText(
@@ -292,43 +332,8 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
                                     ),
                                   ),
                                 ),
-                              ),
-                            Container(
-                              width: 200,
-                              padding: const EdgeInsets.all(8.0),
-                              child: AutoSizeText(
-                                inventario,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 24,
-                                ),
-                                maxLines: 3,
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            Positioned(
-                              top: 20,
-                              child: Container(
-                                constraints: BoxConstraints(
-                                  maxWidth: 250,
-                                  minWidth: 250,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                ),
-                                padding: EdgeInsets.all(20),
-                                child: Hero(
-                                        tag: inventarios[inventario]["ruta"],
-                                      child: Image.asset(
-                                          width: 150,
-                                          height: 150,
-                                          inventarios[inventario]["imagen"] ??
-                                              "recursos/cerebro.png",
-                                          color: inventarios[inventario]["colores"][0],
-                                        ),
-                                    ),
-                              ),
+                                SizedBox(height: isLandscapeMobile ? 4 : 12),
+                              ],
                             ),
                             Positioned(
                               top: 10,

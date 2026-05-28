@@ -79,159 +79,158 @@ class _InicioSesionState extends State<InicioSesion> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        alignment: Alignment.center,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                  colors: [
-                const Color.fromARGB(255, 58, 123, 183),
-                const Color.fromARGB(255, 0, 177, 153),
-              ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isLandscapeMobile = screenHeight < 500 && screenWidth > screenHeight;
+
+    Widget titulo = AutoSizeText(
+      "Vocacional",
+      maxFontSize: 100,
+      style: const TextStyle(
+        fontSize: 40,
+        fontWeight: FontWeight.bold,
+        color: Colors.blueGrey,
+      ),
+      maxLines: 1,
+    );
+
+    Widget campos = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        TextFormField(
+          controller: _emailController,
+          decoration: const InputDecoration(
+            labelText: 'Usuario',
+            hintText: 'usuario@ejemplo.com',
+            prefixIcon: Icon(Icons.email),
           ),
-          Center(
-            child: Hero(
-              tag: "fondo",
-              child: Container(
-                decoration: BoxDecoration(
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.5),
-                      spreadRadius: 5,
-                      blurRadius: 7,
-                      offset: Offset(0, 3), 
-                    ),
-                  ],
-                  color: const Color.fromARGB(234, 255, 255, 255),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                constraints: BoxConstraints(
-                  maxWidth: 400,
-                  minWidth: 300,
-                  minHeight: 400,
-                  maxHeight: 500,
-                ),
-                padding: EdgeInsets.all(16.0),
-                child: Form(
-                  key: _formKey, 
+          keyboardType: TextInputType.text,
+          textInputAction: TextInputAction.next,
+          validator: (value) {
+            if (value == null || value.isEmpty) return 'Por favor ingresa tu email';
+            return null;
+          },
+        ),
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _passwordController,
+          decoration: const InputDecoration(
+            labelText: 'Contraseña',
+            hintText: 'Ingresa tu contraseña',
+            prefixIcon: Icon(Icons.lock),
+          ),
+          obscureText: true,
+          textInputAction: TextInputAction.done,
+          onFieldSubmitted: (_) => _validar(),
+          validator: (value) {
+            if (value == null || value.isEmpty) return 'Por favor ingresa tu contraseña';
+            if (value.length < 6) return 'La contraseña debe tener al menos 6 caracteres';
+            return null;
+          },
+        ),
+      ],
+    );
+
+    Widget botones = Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        ElevatedButton(
+          onPressed: _validar,
+          child: const Text('Iniciar Sesión', style: TextStyle(fontSize: 14, color: Colors.white)),
+        ),
+        ElevatedButton(
+          onPressed: _iniciarSesionSinConexion,
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.deepOrangeAccent),
+          child: const Text('Iniciar sin conexión', style: TextStyle(fontSize: 14, color: Colors.white)),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => Registro()))
+               ;
+          },
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.amber),
+          child: const Text('Registrarse', style: TextStyle(fontSize: 14, color: Colors.white)),
+        ),
+      ],
+    );
+
+    Widget contenidoFormulario = isLandscapeMobile
+        // Landscape: título a la izquierda, campos+botones a la derecha
+        ? Row(
+            children: [
+              Expanded(
+                flex: 1,
+                child: Center(child: titulo),
+              ),
+              Expanded(
+                flex: 1,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(12.0),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      AutoSizeText(
-                        "Vocacional",
-                        maxFontSize: 100,
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                        maxLines: 1,
-                      ),
-                      SizedBox(height: 24),
-                      // TextFormField para email
-                      TextFormField(
-                        controller: _emailController,
-                        decoration: InputDecoration(
-                          labelText: 'Usuario',
-                          hintText: 'usuario@ejemplo.com',
-                          prefixIcon: Icon(Icons.email),
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.text,
-                        textInputAction: TextInputAction
-                            .next, 
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Por favor ingresa tu email';
-                          }
-              
-                          return null; 
-                        },
-                      ),
-              
-                      SizedBox(height: 16),
-              
-                      // TextFormField para contraseña
-                      TextFormField(
-                        controller: _passwordController,
-                        decoration: InputDecoration(
-                          labelText: 'Contraseña',
-                          hintText: 'Ingresa tu contraseña',
-                          prefixIcon: Icon(Icons.lock),
-                          border: OutlineInputBorder(),
-                        ),
-                        obscureText: true, // Oculta el texto
-                        textInputAction: TextInputAction
-                            .done, // Muestra el botón "Listo" en el teclado
-                        onFieldSubmitted: (_) =>
-                           _validar(),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Por favor ingresa tu contraseña';
-                          }
-                          if (value.length < 6) {
-                            return 'La contraseña debe tener al menos 6 caracteres';
-                          }
-                          return null;
-                        },
-                      ),
-              
-                      SizedBox(height: 24),
-              
-                      // Botón de inicio de sesión
-                      ElevatedButton(
-                        onPressed: (){
-                        
-                          _validar();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: Size(double.infinity, 50),
-                        ),
-                        child: Text(
-                          'Iniciar Sesión',
-                          style: TextStyle(fontSize: 14, color: Colors.white),
-                        ),
-                      ),
-                      SizedBox(height: 10),
-                      ElevatedButton(
-                        onPressed: _iniciarSesionSinConexion,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.deepOrangeAccent,
-                          minimumSize: Size(double.infinity, 50),
-                        ),
-                        child: Text(
-                          'Iniciar sin conexión',
-                          style: TextStyle(fontSize: 14, color: Colors.white),
-                        ),
-                      ),
-                      SizedBox(height: 10),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => Registro())).then((_) {
-                          _iniciarSesion();
-                          });},
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: Size(50, 50),
-                          backgroundColor: Colors.amber,
-                        ),
-                        child: Text(
-                          'Registrarse',
-                          style: TextStyle(fontSize: 14, color: Colors.white),
-                        ),
-                      ),
-                    ],
+                    mainAxisSize: MainAxisSize.min,
+                    children: [campos, const SizedBox(height: 12), botones],
                   ),
                 ),
               ),
+            ],
+          )
+        // Portrait: columna centrada
+        : SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                titulo,
+                const SizedBox(height: 20),
+                campos,
+                const SizedBox(height: 16),
+                botones,
+              ],
+            ),
+          );
+
+    return Scaffold(
+      resizeToAvoidBottomInset: true,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color.fromARGB(255, 58, 123, 183),
+              Color.fromARGB(255, 0, 177, 153),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Center(
+          child: Hero(
+            tag: "fondo",
+            child: Container(
+              margin: EdgeInsets.all(isLandscapeMobile ? 8.0 : 24.0),
+              constraints: BoxConstraints(
+                maxWidth: isLandscapeMobile ? double.infinity : 480,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    spreadRadius: 5,
+                    blurRadius: 15,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Form(
+                key: _formKey,
+                child: contenidoFormulario,
+              ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }

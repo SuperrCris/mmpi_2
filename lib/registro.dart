@@ -51,45 +51,51 @@ class _RegistroState extends State<Registro> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Column(
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isLandscapeMobile = screenHeight < 500 && screenWidth > screenHeight;
+
+    Widget titulo = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            SizedBox(height: 20),
-            Center(child: Text('Vocacional', style: TextStyle(color: Theme.of(context).primaryColor, fontSize: 40, fontWeight: FontWeight.bold))),
+              ElevatedButton(
+              onPressed: () => Navigator.pushReplacementNamed(context, '/inicio_sesion'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.white,
+                shadowColor: Colors.black.withOpacity(0.3),
+                elevation: 5,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              ),
+              child: Icon(Icons.arrow_back_rounded, color: Colors.white, shadows: [Shadow(offset: Offset(0, 2), blurRadius: 0.2, color: Colors.black12)]),
+            ),
+            AutoSizeText(
+              'Vocacional',
+              maxFontSize: 100,
+              style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white),
+              maxLines: 1,
+            ),
+ SizedBox(width: 1),
           ],
         ),
-      ),
-      backgroundColor: Colors.white,
-      body: Center(
-        child: Container(
-          constraints: BoxConstraints(maxWidth: 400, maxHeight: 600),
-          padding: EdgeInsets.symmetric(horizontal: 50, vertical: 30),
-          decoration: BoxDecoration(
-            color: Colors.blue,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.5),
-                spreadRadius: 5,
-                blurRadius: 7,
-                offset: Offset(0, 3),
-              ),
-            ],
-          ),
-          child: SingleChildScrollView(
-            child: Form(
-              key: _llaveFormulario,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                spacing: 10,
-                children: [
-                  AutoSizeText(
-                    'Crea una cuenta',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
-                    maxLines: 1,
-                  ),
-                  TextFormField(
+        const SizedBox(height: 8),
+        AutoSizeText(
+          'Crea una cuenta',
+          maxFontSize: 60,
+          style: TextStyle(fontSize: 20, color: Colors.white.withOpacity(0.85)),
+          maxLines: 1,
+        ),
+      ],
+    );
+
+    Widget camposFormulario = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(height: 8),
+        TextFormField(
                     focusNode: _fnNombre,
                     textInputAction: TextInputAction.next,
                     onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(_fnApellido),
@@ -193,8 +199,69 @@ class _RegistroState extends State<Registro> {
                     child: Text('Registrar', style: TextStyle(color: Colors.white, shadows: [Shadow(offset: Offset(0, 2), blurRadius: 0.2, color: Colors.black12)])),
                   ),
                 ],
+      );
+
+    Widget contenido = isLandscapeMobile
+        ? Row(
+            children: [
+              Expanded(
+                flex: 1,
+                child: Center(child: titulo),
+              ),
+              Expanded(
+                flex: 1,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Form(
+                    key: _llaveFormulario,
+                    child: camposFormulario,
+                  ),
+                ),
+              ),
+            ],
+          )
+        : SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _llaveFormulario,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [titulo, const SizedBox(height: 16), camposFormulario],
               ),
             ),
+          );
+
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color.fromARGB(255, 58, 123, 183),
+              Color.fromARGB(255, 0, 177, 153),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Center(
+          child: Container(
+            margin: EdgeInsets.all(isLandscapeMobile ? 8.0 : 24.0),
+            constraints: BoxConstraints(
+              maxWidth: isLandscapeMobile ? double.infinity : 480,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  spreadRadius: 5,
+                  blurRadius: 15,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: contenido,
           ),
         ),
       ),

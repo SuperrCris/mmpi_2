@@ -20,6 +20,10 @@ class _IncisoState extends State<Inciso> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isLandscapeMobile = screenHeight < 500 && screenWidth > screenHeight;
+    final isPortraitMobile = screenWidth < 600 && screenHeight > screenWidth;
+
     return MouseRegion(
       onHover: (event) {
         setState(() {
@@ -38,7 +42,11 @@ class _IncisoState extends State<Inciso> {
         duration: Duration(milliseconds: 200),
         child: Container(
           
-constraints: BoxConstraints(minHeight: 60, minWidth: screenWidth * 0.15, maxWidth: screenWidth * 0.28),
+constraints: BoxConstraints(
+              minWidth: screenWidth * 0.05,
+              maxWidth: isPortraitMobile ? screenWidth * 0.30 : screenWidth * 0.20,
+            ), 
+            height: isLandscapeMobile ? screenHeight * 0.15 : screenHeight * 0.1,
             padding: EdgeInsets.all(5),
             decoration: BoxDecoration(
               
@@ -49,10 +57,10 @@ constraints: BoxConstraints(minHeight: 60, minWidth: screenWidth * 0.15, maxWidt
          
               child: Center(
                 child: AutoSizeText(
-                  widget.texto,
+                  widget.texto.replaceFirst(' ', '\n'),
                   textAlign: TextAlign.center,
-                  maxLines: 1,
-                  minFontSize: 10,
+                  maxLines: 2,
+                  minFontSize: 8,
                   style: TextStyle(
                     color: Colors.white, fontSize: 36, fontWeight: FontWeight.w900),
                 ),

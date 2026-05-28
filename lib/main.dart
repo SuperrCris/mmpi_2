@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:mmpi_2/firebase_options.dart';
+import 'package:mmpi_2/inv2.dart';
 import 'package:mmpi_2/servicios/tema_controlador.dart';
 import 'package:mmpi_2/utilidades/excel.dart';
 import 'package:auto_size_text/auto_size_text.dart';
@@ -67,6 +68,7 @@ class MMPIApp extends StatelessWidget {
         "/inventario_autoevaluacion_aptitudes": (context) => _MMPI(),
         "/inventario_interes_ocupacional": (context) => _MMPI(),
         "/inventario_preferencias_universitarias": (context) => _MMPI(),
+        "/inventario_preferencias_universitarias2": (context) => inventario2(tipoInventario: "Preferencias universitarias 2", tipo: "preferencias_universitarias2"),
         "/inicio_sesion": (context) => InicioSesion(),
         "/seleccion_inventario": (context) => SeleccionInventario(),
       },
@@ -362,10 +364,8 @@ List<int> respuestas = [];
    ancho = MediaQuery.of(context).size.width;
     return Scaffold(
         bottomNavigationBar: 
-
-           
              Padding(
-               padding: const EdgeInsets.all(8.0),
+               padding: const EdgeInsets.all(1),
                child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 spacing: 10,
@@ -374,7 +374,7 @@ List<int> respuestas = [];
                     style:  ElevatedButton.styleFrom(
                       backgroundColor: const Color.fromARGB(255, 0, 132, 255),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                      textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                      textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   onPressed: (){
                     verPaginas();
@@ -384,7 +384,7 @@ List<int> respuestas = [];
                   children: const [
                     Icon(Icons.rocket_launch, color: Color.fromARGB(255, 255, 255, 255)),
                     SizedBox(width: 8),
-                    Text("Ver mi progreso", style: TextStyle(color: Color.fromARGB(255, 255, 255, 255), fontWeight: FontWeight.bold),)
+                    Text("Ver mi progreso", style: TextStyle(fontSize: 10, color: Color.fromARGB(255, 255, 255, 255), fontWeight: FontWeight.bold),)
                   ],
                  )
                         ),
@@ -392,7 +392,7 @@ List<int> respuestas = [];
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color.fromARGB(255, 19, 192, 25),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                        textStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
                       onPressed: () async {
                         await ExcelUtil.crearReporteConPlantilla(
@@ -421,6 +421,7 @@ List<int> respuestas = [];
              ),
          
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           backgroundColor: coloresBarra[1],
           title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -429,12 +430,12 @@ List<int> respuestas = [];
                           style: ElevatedButton.styleFrom(
                       backgroundColor:  Colors.white,
                       shape: RoundedRectangleBorder (borderRadius: BorderRadius.circular(20)),
-                      textStyle:  TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                      textStyle:  const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
               onPressed: (){
               Navigator.pop(context);
             }, child: 
-            Icon(Icons.arrow_back, color: Colors.blue,)
+            const Icon(Icons.arrow_back, color: Colors.blue,)
             ),
             Row(spacing: 3,children: [
                       Hero(
@@ -546,17 +547,20 @@ List<int> respuestas = [];
     showDialog(
       context: context, 
       builder: (context) => AlertDialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+        titlePadding: const EdgeInsets.only(left: 12.0,right: 12.0, top: 3.0, bottom: 1.0),
+        contentPadding: const EdgeInsets.all(3.0),
         title: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            SizedBox(width: 30,),
+            SizedBox(width: 30),
             Text("Respuestas"),
             GestureDetector(
               onTap: () => Navigator.pop(context),
               child: Container(
                 height: 30,
                 width: 30,
-                padding: const EdgeInsets.all(4.0),
+                padding: const EdgeInsets.all(2.0),
                 decoration: BoxDecoration(
                   color: Colors.red,
                   borderRadius: BorderRadius.circular(20),
@@ -568,7 +572,7 @@ List<int> respuestas = [];
         ),
         content: SizedBox(
           width: double.maxFinite,
-          height: MediaQuery.of(context).size.height * 0.9,
+          height: MediaQuery.of(context).size.height * 1,
           child: FutureBuilder(
             future: Future.delayed(Duration(milliseconds: 100)),
             builder: (context, snapshot) {
@@ -584,14 +588,14 @@ List<int> respuestas = [];
                 children: [
                   Expanded(
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(15),
                       clipBehavior: Clip.hardEdge,
                       child: GridView.builder(
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 10,
+                          crossAxisCount: MediaQuery.of(context).orientation == Orientation.portrait ? 5 : 10,
                           childAspectRatio: 1,
-                          mainAxisSpacing: 10,
-                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 3,
+                          crossAxisSpacing: 3,
                         ),
                         itemCount: preguntas.length,
                         itemBuilder: (context, index) {
@@ -603,7 +607,7 @@ List<int> respuestas = [];
                             child: Container(
                               decoration: BoxDecoration(
                                 color: respuestas[index] == -1 ? Colors.grey : const Color.fromARGB(255, 19, 192, 25),
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius: BorderRadius.circular(15),
                               ),
                               child: Center(
                                 child: AutoSizeText(
@@ -630,7 +634,7 @@ List<int> respuestas = [];
                       ),
                     ),
                   ),
-                  SizedBox(height: 15),
+                  SizedBox(height: 1),
                   Text(
                     "Has respondido ${respuestas.where((r) => r != -1).length} de ${preguntas.length} preguntas", 
                     style: TextStyle(
@@ -685,83 +689,115 @@ Widget _pagina(
   void Function(int) cambiarPagina,
   int seleccionado,
 ) {
+  final screenWidth = MediaQuery.of(context).size.width;
+  final screenHeight = MediaQuery.of(context).size.height;
+  final isLandscapeMobile = screenHeight < 500 && screenWidth > screenHeight;
+  final isPortraitMobile = screenWidth < 600;
+
+  Widget botonesGrid = GridView.count(
+    crossAxisCount: 2,
+    crossAxisSpacing: 8,
+    mainAxisSpacing: 6,
+    childAspectRatio: isLandscapeMobile ? 3.2 : 2.8,
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
+    children: incisos.map((inciso) => GestureDetector(
+      onTap: () => cambiarPagina(incisos.indexOf(inciso)),
+      child: Inciso(texto: inciso, valor: incisos.indexOf(inciso), seleccionado: seleccionado == incisos.indexOf(inciso), key: null),
+    )).toList(),
+  );
+
+  Widget botonesWrap = Wrap(
+    alignment: WrapAlignment.center,
+    spacing: 10,
+    runSpacing: 5,
+    children: incisos.map((inciso) => GestureDetector(
+      onTap: () => cambiarPagina(incisos.indexOf(inciso)),
+      child: Inciso(texto: inciso, valor: incisos.indexOf(inciso), seleccionado: seleccionado == incisos.indexOf(inciso), key: null),
+    )).toList(),
+  );
+
+  Widget botonesContainer = Container(
+    margin: EdgeInsets.symmetric(
+      horizontal: isLandscapeMobile ? 8 : 20,
+      vertical: isLandscapeMobile ? 8 : 20,
+    ),
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(20),
+      gradient: const LinearGradient(
+        colors: [Colors.black12, Colors.black26],
+        end: Alignment.topCenter,
+        begin: Alignment.bottomCenter,
+      ),
+    ),
+    child: botonesWrap,
+  );
+
   return Padding(
     padding: const EdgeInsets.all(8.0),
     child: Container(
-      height:  150,
       width: double.infinity,
       decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [ color,color],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
+        gradient: LinearGradient(
+          colors: [color, color],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
+        boxShadow: const [
+          BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 5)),
         ],
       ),
-
-        child: SizedBox(
-          child: Column(
-            
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(
-                flex: 2,
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: AutoSizeText(
-                      texto,
-                      style: const TextStyle(fontWeight: FontWeight.w900,fontSize: 100, color: Color.fromARGB(255, 255, 255, 255),),
-                      textAlign: TextAlign.center,
-                      maxLines: 4,
+      child: isLandscapeMobile
+          // Landscape mobile: pregunta a la izquierda, botones a la derecha
+          ? Row(
+              children: [
+                Expanded(
+                  flex: 1,
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: AutoSizeText(
+                        texto,
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 100, color: Colors.white),
+                        textAlign: TextAlign.center,
+                        maxLines: 5,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-             Flexible(
-              flex: 1,
-               child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  gradient: LinearGradient(
-                    colors: [Colors.black12, Colors.black26],
-                    end: Alignment.topCenter,
-                    begin: Alignment.bottomCenter,
-
+                Expanded(
+                  flex: 1,
+                  child: botonesContainer,
+                ),
+              ],
+            )
+          // Portrait: columna normal
+          : Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  flex: 2,
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: AutoSizeText(
+                        texto,
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 100, color: Color.fromARGB(255, 255, 255, 255)),
+                        textAlign: TextAlign.center,
+                        maxLines: 4,
+                      ),
+                    ),
                   ),
                 ),
-                   child: Wrap(
-                      alignment: WrapAlignment.center,
-                      spacing: 10,
-                      runSpacing: 5,
-                      children: incisos
-                          .map(
-                            (inciso) => GestureDetector(
-                                onTap: () {
-                                  cambiarPagina(incisos.indexOf(inciso));
-                                },
-                                child: Inciso(texto: inciso, valor: incisos.indexOf(inciso), seleccionado: seleccionado == incisos.indexOf(inciso), key: null,),
-                              ),
-                          )
-                          .toList(),
-                    
-                 ),
-               ),
-             ),
-            ],
-          ),
-        ),
-      
+                SizedBox(height: screenHeight * 0.02),
+                Flexible(
+                  flex: isPortraitMobile ? 2 : 1,
+                  child: botonesContainer,
+                ),
+              ],
+            ),
     ),
   );
 }
