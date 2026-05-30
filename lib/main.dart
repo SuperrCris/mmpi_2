@@ -69,6 +69,12 @@ class MMPIApp extends StatelessWidget {
         "/inventario_interes_ocupacional": (context) => _MMPI(),
         "/inventario_preferencias_universitarias": (context) => _MMPI(),
         "/inventario_preferencias_universitarias2": (context) => inventario2(tipoInventario: "Preferencias universitarias 2", tipo: "preferencias_universitarias2"),
+        "/FM": (context) => _MMPI(),
+        "/A": (context) => _MMPI(),
+        "/S": (context) => _MMPI(),
+        "/H": (context) => _MMPI(),
+        "/Q": (context) => _MMPI(),
+        "/B": (context) => _MMPI(),
         "/inicio_sesion": (context) => InicioSesion(),
         "/seleccion_inventario": (context) => SeleccionInventario(),
       },
@@ -198,9 +204,8 @@ class MMPIApp extends StatelessWidget {
 }
 class _MMPI extends StatefulWidget {
     
-    Map<String, dynamic>? info;
 
-  _MMPI({Key? key, this.info}) : super(key: key);
+  _MMPI({Key? key}) : super(key: key);
 
   
 
@@ -209,8 +214,9 @@ class _MMPI extends StatefulWidget {
 }
 
 class _MMPIState extends State<_MMPI> {
+late List<String> incisos;
+late bool incisosenumerados;
 
-  final incisos = ["Nada hábil", "Poco hábil", "Medianamente hábil", "Muy hábil", "Extremadamente hábil"];
 PageController pageController = PageController();
 int paginaActual = 1;
 List<String> preguntas = [];
@@ -235,8 +241,14 @@ List<int> respuestas = [];
     super.didChangeDependencies();
     if (!_initialized) {
       _initialized = true;
-      preguntas = Repositoriopreguntas(ModalRoute.of(context)?.settings.name ?? '');
+      preguntas = Repositoriopreguntas(ModalRoute.of(context)?.settings.name ?? '' );
       respuestas = List<int>.filled(preguntas.length, -1);
+      final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+      final info = args["info"] as Map<String, dynamic>;
+      incisos = info["rangocalificacion"] == 0
+          ? ["Nada hábil", "Poco hábil", "Medianamente hábil", "Muy hábil", "Extremadamente hábil"]
+          : [for (int i = 1; i <= info["rangocalificacion"]; i++) "$i"];
+      incisosenumerados = info["rangocalificacion"] != 0;
       _cargarRespuestasGuardadas();
     }
   }
@@ -356,9 +368,12 @@ List<int> respuestas = [];
   ];
   @override
   Widget build(BuildContext context) {
+    
   final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
   final info = args["info"] as Map<String, dynamic>;
+   final preguntas = Repositoriopreguntas(ModalRoute.of(context)?.settings.name ?? '' );
   String imagen = info["imagen"] as String;
+  print("args[info]: $info");
 
   List<Color> coloresBarra = info["colores"] as List<Color>;
    ancho = MediaQuery.of(context).size.width;
@@ -703,7 +718,7 @@ Widget _pagina(
     physics: const NeverScrollableScrollPhysics(),
     children: incisos.map((inciso) => GestureDetector(
       onTap: () => cambiarPagina(incisos.indexOf(inciso)),
-      child: Inciso(texto: inciso, valor: incisos.indexOf(inciso), seleccionado: seleccionado == incisos.indexOf(inciso), key: null),
+      child: Inciso(texto: inciso, valor: incisos.indexOf(inciso), seleccionado: seleccionado == incisos.indexOf(inciso), key: null, esNumero: incisosenumerados),
     )).toList(),
   );
 
@@ -713,7 +728,7 @@ Widget _pagina(
     runSpacing: 5,
     children: incisos.map((inciso) => GestureDetector(
       onTap: () => cambiarPagina(incisos.indexOf(inciso)),
-      child: Inciso(texto: inciso, valor: incisos.indexOf(inciso), seleccionado: seleccionado == incisos.indexOf(inciso), key: null),
+      child: Inciso(texto: inciso, valor: incisos.indexOf(inciso), seleccionado: seleccionado == incisos.indexOf(inciso), key: null, esNumero: incisosenumerados),
     )).toList(),
   );
 

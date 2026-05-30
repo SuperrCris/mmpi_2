@@ -1,7 +1,9 @@
 
 
 
-List<String> Repositoriopreguntas(String inv, {String tipo = ""}) {
+import 'package:flutter/material.dart';
+
+List<String> Repositoriopreguntas(String inv) {
 
     switch (inv) {
       case "/inventario_autoevaluacion_aptitudes":
@@ -10,28 +12,38 @@ List<String> Repositoriopreguntas(String inv, {String tipo = ""}) {
         return ocupacional.values.toList();
       case "/inventario_preferencias_universitarias":
         return universitarias.values.toList();
-      case "/inventario_preferencias_universitarias2":
-        if (tipo.isEmpty || !intereses.containsKey(tipo)) return [];
-        return (intereses[tipo]["preguntas"] as Map).values.cast<String>().toList();
+       //si no coincide con ninguno de los casos anteriores, se entiende que se busca un inventario de interes, o bien, que se busca un inventario que no existe
       default:
-        return ["Tipo de lista de preguntas no válido"];
+      try{
+        final key = inv.startsWith("/") ? inv.substring(1) : inv;
+        print("Buscando preguntas para el inventario de interés: $key");
+        return (intereses[key]["preguntas"] as Map).values.toList().cast<String>();
+      }catch(e){
+          return ["No se encontró el inventario de preguntas para el interés seleccionado."];
+        }
     }
 }
 
-Map <String, String> todoslosintereses() {
-  Map <String, String> listainteres = {};
-  for (var interesKey in intereses.keys) {
-    listainteres[interesKey] = intereses[interesKey]["nombre"];
-  }
-  return listainteres;
+Map<String, Map<String, dynamic>> todoslosintereses() {
+  return {
+    for (var key in intereses.keys)
+      key: {
+        "nombre": intereses[key]["nombre"] as String,
+        "descripcion": intereses[key]["descripcion"] as String,
+        "icono": intereses[key]["icono"] as IconData,
+        "rangocalificacion": intereses[key]["rangocalificacion"] as int,
+      }
+  };
 }
 
-int tamanoInventario(String inv, {String tipo = ""}) => Repositoriopreguntas(inv, tipo: tipo).length;
+
+int tamanoInventario(String inv, {String tipo = ""}) => Repositoriopreguntas(inv).length;
   final Map<String, dynamic> intereses = {
     "FM" :{
       "nombre": "Fisico Matemático",
       "rangocalificacion": 7,
-      "descripcion": "",
+      "descripcion": "Se relaciona con el interés por las matemáticas, física y ciencias exactas.",
+      "icono" : Icons.calculate,
       "carreras": [
       ],
       "preguntas":fm,
@@ -40,6 +52,7 @@ int tamanoInventario(String inv, {String tipo = ""}) => Repositoriopreguntas(inv
       "nombre": "Biología",
       "rangocalificacion": 7,
       "descripcion": "Se relaciona con el interés por la naturaleza, seres vivos, salud y ciencias biológicas.",
+      "icono" : Icons.biotech,
       "carreras": [
         "Medicina",
         "Psicología",
@@ -51,6 +64,7 @@ int tamanoInventario(String inv, {String tipo = ""}) => Repositoriopreguntas(inv
       "nombre": "Química",
       "rangocalificacion": 7,
       "descripcion": "Tiene que ver con experimentos, sustancias, laboratorio e investigación científica.",
+      "icono" : Icons.science,
       "carreras": [
         "Química",
         "QFB (Químico Farmacéutico Biólogo)",
@@ -65,6 +79,7 @@ int tamanoInventario(String inv, {String tipo = ""}) => Repositoriopreguntas(inv
       "nombre": "Social",
       "rangocalificacion": 6,
       "descripcion": "Relacionada con ayudar a personas, comunicación y sociedad.",
+      "icono" : Icons.people,
       "carreras": [
         "Psicología",
         "Trabajo Social",
@@ -80,6 +95,7 @@ int tamanoInventario(String inv, {String tipo = ""}) => Repositoriopreguntas(inv
       "nombre": "Artística",
       "rangocalificacion": 10,
       "descripcion": "Se enfoca en creatividad, expresión y arte.",
+      "icono" : Icons.brush,
       "carreras": [
         "Diseño Gráfico",
         "Arquitectura",
@@ -95,6 +111,7 @@ int tamanoInventario(String inv, {String tipo = ""}) => Repositoriopreguntas(inv
       "nombre": "Humanística",
       "rangocalificacion": 9,
       "descripcion": "Relacionada con lectura, escritura, pensamiento crítico y cultura.",
+      "icono" : Icons.menu_book,
       "carreras": [
         "Filosofía",
         "Historia",

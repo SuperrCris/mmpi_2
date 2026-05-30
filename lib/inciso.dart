@@ -4,11 +4,12 @@ import 'package:flutter/material.dart';
 class Inciso  extends StatefulWidget{
   int valor = 0;
   String texto = '';
+  bool esNumero = false;
   
 bool seleccionado = false;
   
 
-  Inciso ({ required this.texto, required this.valor, required this.seleccionado, required Key? key}) : super(key: key);
+  Inciso ({ required this.texto, required this.valor, required this.seleccionado, required this.esNumero, required Key? key}) : super(key: key);
   @override
   _IncisoState createState() => _IncisoState();
 
@@ -43,8 +44,8 @@ class _IncisoState extends State<Inciso> {
         child: Container(
           
 constraints: BoxConstraints(
-              minWidth: screenWidth * 0.05,
-              maxWidth: isPortraitMobile ? screenWidth * 0.30 : screenWidth * 0.20,
+              minWidth: widget.esNumero ? 0 : screenWidth * 0.05,
+              maxWidth: widget.esNumero ?screenWidth * 0.05 : (isPortraitMobile ? screenWidth * 0.30 : screenWidth * 0.20),
             ), 
             height: isLandscapeMobile ? screenHeight * 0.15 : screenHeight * 0.1,
             padding: EdgeInsets.all(5),
@@ -62,7 +63,7 @@ constraints: BoxConstraints(
                   maxLines: 2,
                   minFontSize: 8,
                   style: TextStyle(
-                    color: Colors.white, fontSize: 36, fontWeight: FontWeight.w900),
+                    color: Colors.white, fontSize: widget.esNumero ? 36 : 24, fontWeight: FontWeight.w900),
                 ),
               ),
           

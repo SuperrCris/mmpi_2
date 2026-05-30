@@ -213,7 +213,7 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
                       Navigator.pushNamed(
                         context,
                         inventarios[inventario]["ruta"],
-                        arguments: {"info": <String, dynamic>{...inventarios[inventario]!, "titulo": inventario}},
+                        arguments: {"info": <String, dynamic>{...inventarios[inventario]!, "titulo": inventario, "rangocalificacion": 0}},
                       ).then((_) => _cargarCompletados());
                     },
                     child: TweenAnimationBuilder<double>(
