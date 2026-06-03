@@ -18,6 +18,8 @@ static Future<void> crearReporteConPlantilla(Map<String, dynamic> info) async {
 
   print("plantilla obtenida");
 
+  final inventariosCompletados = info["respuestas"].length;
+
   Sheet sheetObject = excel['Aptitudes'];
 
   //Nombre completo

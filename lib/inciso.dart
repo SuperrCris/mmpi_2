@@ -44,10 +44,10 @@ class _IncisoState extends State<Inciso> {
         child: Container(
           
 constraints: BoxConstraints(
-              minWidth: widget.esNumero ? 0 : screenWidth * 0.05,
-              maxWidth: widget.esNumero ?screenWidth * 0.05 : (isPortraitMobile ? screenWidth * 0.30 : screenWidth * 0.20),
+              minWidth: widget.esNumero ? screenWidth * 0.09 : screenWidth * 0.05,
+              maxWidth: widget.esNumero ? screenWidth * 0.14 : (isPortraitMobile ? screenWidth * 0.30 : screenWidth * 0.20),
             ), 
-            height: isLandscapeMobile ? screenHeight * 0.15 : screenHeight * 0.1,
+            height: isLandscapeMobile ? double.infinity : screenHeight * 0.1,
             padding: EdgeInsets.all(5),
             decoration: BoxDecoration(
               
@@ -58,9 +58,9 @@ constraints: BoxConstraints(
          
               child: Center(
                 child: AutoSizeText(
-                  widget.texto.replaceFirst(' ', '\n'),
+                  widget.esNumero ? widget.texto : widget.texto.replaceFirst(' ', '\n'),
                   textAlign: TextAlign.center,
-                  maxLines: 2,
+                  maxLines: widget.esNumero ? 1 : 2,
                   minFontSize: 8,
                   style: TextStyle(
                     color: Colors.white, fontSize: widget.esNumero ? 36 : 24, fontWeight: FontWeight.w900),

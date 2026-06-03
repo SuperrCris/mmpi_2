@@ -309,14 +309,14 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
                                     textAlign: TextAlign.center,
                                   ),
                                 ),
-                                Container(
+                               tamanoInventario(inventarios[inventario]["ruta"]) != 1 ? Container(
                                   height: 20,
                                   width: 100,
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     borderRadius: BorderRadius.all(Radius.circular(45)),
                                   ),
-                                  child: Center(
+                                  child:  Center(
                                     child: AutoSizeText(
                                       _inventariosCompletados.contains(inventarios[inventario]["ruta"])
                                           ? "Completado ✓"
@@ -330,8 +330,8 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
                                       ),
                                       maxLines: 1,
                                     ),
-                                  ),
-                                ),
+                                  ) 
+                                ): SizedBox( height: 20), // espacio para mantener consistencia aunque no se muestre el progreso en inventarios de 1 pregunta
                                 SizedBox(height: isLandscapeMobile ? 4 : 12),
                               ],
                             ),

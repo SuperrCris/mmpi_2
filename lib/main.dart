@@ -709,17 +709,42 @@ Widget _pagina(
   final isLandscapeMobile = screenHeight < 500 && screenWidth > screenHeight;
   final isPortraitMobile = screenWidth < 600;
 
-  Widget botonesGrid = GridView.count(
-    crossAxisCount: 2,
-    crossAxisSpacing: 8,
-    mainAxisSpacing: 6,
-    childAspectRatio: isLandscapeMobile ? 3.2 : 2.8,
-    shrinkWrap: true,
-    physics: const NeverScrollableScrollPhysics(),
-    children: incisos.map((inciso) => GestureDetector(
-      onTap: () => cambiarPagina(incisos.indexOf(inciso)),
-      child: Inciso(texto: inciso, valor: incisos.indexOf(inciso), seleccionado: seleccionado == incisos.indexOf(inciso), key: null, esNumero: incisosenumerados),
-    )).toList(),
+  final int cols = ((incisos.length + 1) / 2).ceil().clamp(1, 10);
+  final firstRow = incisos.sublist(0, cols);
+  final secondRow = incisos.length > cols ? incisos.sublist(cols) : <String>[];
+
+  Widget buildLandscapeButton(String inciso) {
+    final idx = incisos.indexOf(inciso);
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => cambiarPagina(idx),
+        child: Padding(
+          padding: const EdgeInsets.all(3.0),
+          child: Inciso(texto: inciso, valor: idx, seleccionado: seleccionado == idx, key: null, esNumero: incisosenumerados),
+        ),
+      ),
+    );
+  }
+
+  Widget botonesLandscapeGrid = Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Expanded(
+        child: Row(
+          children: firstRow.map(buildLandscapeButton).toList(),
+        ),
+      ),
+      if (secondRow.isNotEmpty)
+        Expanded(
+          child: Row(
+            children: [
+              ...secondRow.map(buildLandscapeButton).toList(),
+              // rellenar con espacio vacío si segunda fila tiene menos botones
+              ...List.generate(cols - secondRow.length, (_) => Expanded(child: SizedBox())),
+            ],
+          ),
+        ),
+    ],
   );
 
   Widget botonesWrap = Wrap(
@@ -746,7 +771,9 @@ Widget _pagina(
         begin: Alignment.bottomCenter,
       ),
     ),
-    child: botonesWrap,
+    child: isLandscapeMobile
+        ? botonesLandscapeGrid
+        : botonesWrap,
   );
 
   return Padding(
