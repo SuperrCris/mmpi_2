@@ -1,0 +1,14 @@
+{
+  "hosting": {
+    "public": "build/web",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "firestore": {"database":"(default)","location":"nam5","rules":"firestore.rules","indexes":"firestore.indexes.json"},
+  "flutter": {"platforms": {"dart": {"lib/firebase_options.dart": {"projectId": "vocacional-d152d","configurations": {"web": "1:135342725189:web:27c6afd7bad416abc0eb2c"}}}}}
+}
