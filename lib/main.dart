@@ -504,45 +504,6 @@ List<int> respuestas = [];
                 },
               ),
               Positioned(child: Text(textAlign: TextAlign.center,"Pregunta ${paginaActual} de ${preguntas.length}", style: const TextStyle(color: Color.fromARGB(255, 255, 255, 255))), bottom: 10, right: 10, left: 10,)
-        
-               /*   ListView.builder(
-            physics: const ClampingScrollPhysics(),
-            itemCount: preguntas.length,
-            itemBuilder: (context, index) {
-            
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-              child: Row(
-                children: [
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: const Color.fromARGB(255, 0, 132, 255),
-                      borderRadius: BorderRadius.circular(25),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 5,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Center(child: Text("${index + 1}", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),)),
-                  ),
-                  Flexible(
-                    child: _pagina(
-                            preguntas[index],
-                            const Color.fromARGB(255, 0, 152, 223),
-                            incisos,
-                            (seleccionado) => alSeleccionar(index, seleccionado),
-                            respuestas[index],
-                          ),
-                  ),
-                ],
-              ),
-            );
-           })**/
             ],
             ),
         

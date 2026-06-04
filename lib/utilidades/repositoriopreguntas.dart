@@ -23,6 +23,10 @@ List<String> Repositoriopreguntas(String inv) {
         }
     }
 }
+List<int> obtenerSoloLlaves(Map<String, dynamic> inventario) {
+  return inventario.keys.map((key) => int.tryParse(key) ?? -1).where((key) => key != -1).toList();
+}
+
 
 Map<String, Map<String, dynamic>> todoslosintereses() {
   return {
