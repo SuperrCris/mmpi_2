@@ -38,7 +38,8 @@ class _inventario2State extends State<inventario2> {
     final esMobile = ancho < 600;
 
     return Scaffold(
-      body:
+      body: Stack(
+        children: [
         Container(
           alignment: Alignment.center,
 decoration: const BoxDecoration(
@@ -106,13 +107,29 @@ decoration: const BoxDecoration(
                   )
                 ]
                       ),
-            ),
+            
                   
                 
-                )
-          ;
-    
-        
+                ),
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                  style: IconButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(80, 0, 0, 0),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: () => Navigator.maybePop(context),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
     
   }
 }
@@ -138,6 +155,7 @@ class BotonInteres extends StatefulWidget {
 class _BotonInteresState extends State<BotonInteres> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _borderWidth;
+  bool _isHovered = false;
 
   @override
   void initState() {
@@ -167,7 +185,14 @@ class _BotonInteresState extends State<BotonInteres> with SingleTickerProviderSt
     final esMobile = ancho < 600;
     final tamanoBoton = calcularTamanoBoton(ancho, alto);
     final esFavorito = widget.interesesFavoritos.contains(widget.interesKey);
-    return GestureDetector(
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedScale(
+        scale: _isHovered ? 1.03 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeOut,
+        child: GestureDetector(
       onTap: () {
         Navigator.pushNamed(context, "/${widget.interesKey}", arguments: {"info": <String, dynamic>{...widget.infoinventario["Inventario de interes"]!,"titulo": widget.interesData["nombre"], "key": widget.interesKey, "rangocalificacion": widget.interesData["rangocalificacion"]}});
       },
@@ -286,6 +311,8 @@ class _BotonInteresState extends State<BotonInteres> with SingleTickerProviderSt
         )
       ),
         ),
+        ),
+      ),
     );
   }
 }

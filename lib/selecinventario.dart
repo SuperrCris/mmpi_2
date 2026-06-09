@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:mmpi_2/servicios/sesion_controlador.dart';
 import 'package:mmpi_2/servicios/controlador_hive.dart';
 import 'package:mmpi_2/servicios/tema_controlador.dart';
+import 'package:mmpi_2/utilidades/excel.dart';
 import 'package:mmpi_2/utilidades/repositoriopreguntas.dart';
 
 class SeleccionInventario extends StatefulWidget {
@@ -440,45 +441,62 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
                         final todosCompletados = todasLasRutas
                             .every((ruta) => _inventariosCompletados.contains(ruta));
                         return GestureDetector(
-                          onTap: todosCompletados
-                              ? () {
-                                  // TODO: navegar a resultados
+                          onTap: () async {
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (ctx) => AlertDialog(
+                                content: Row(
+                                  children: [
+                                    CircularProgressIndicator(color: const Color.fromARGB(255, 19, 192, 25)),
+                                    SizedBox(width: 20),
+                                    Text("Generando reporte..."),
+                                  ],
+                                ),
+                              ),
+                            );
+                            try {
+                              await ExcelUtil.crearReporteConPlantilla(
+                                {
+                                  "nombre": "Cristian Escalante",
+                                  "grupo": "5°A",
+                                  "edad": 25,
+                                  "sexo": "Masculino",
+                                  "escolaridad": "Universidad",
+                                  "fecha": "2024-06-15",
                                 }
-                              : () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Debes completar todos los inventarios para ver tus resultados.',
-                                      ),
-                                    ),
-                                  );
-                                },
+                              );
+                            } finally {
+                              if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
+                            }
+                          },
                           child: AnimatedOpacity(
-                            opacity: todosCompletados ? 1.0 : 0.45,
+                            opacity: 
+                            /*!todosCompletados ? 0.45 :*/ 1,
                             duration: const Duration(milliseconds: 300),
                             child: Container(
                               height: 150,
                               width: 150,
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
-                                  colors: todosCompletados
-                                      ? [
-                                          const Color.fromARGB(255, 10, 197, 10),
-                                          const Color.fromARGB(255, 0, 189, 94),
-                                        ]
-                                      : [
+                                  colors: /*!todosCompletados
+                                      ? 
+                                       [
                                           Colors.grey.shade500,
                                           Colors.grey.shade600,
+                                        ]:*/
+                                        [
+                                          const Color.fromARGB(255, 10, 197, 10),
+                                          const Color.fromARGB(255, 0, 189, 94),
                                         ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: (todosCompletados
-                                            ? const Color.fromARGB(255, 10, 197, 10)
-                                            : Colors.grey)
-                                        .withOpacity(0.5),
+                                    color: 
+                                            const Color.fromARGB(100, 10, 197, 10),
+                                          
                                     spreadRadius: 5,
                                     blurRadius: 7,
                                     offset: const Offset(0, 3),

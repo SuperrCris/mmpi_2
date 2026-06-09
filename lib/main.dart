@@ -403,13 +403,13 @@ List<int> respuestas = [];
                   ],
                  )
                         ),
-                    ElevatedButton(
+                   /**   ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color.fromARGB(255, 19, 192, 25),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                         textStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
-                      onPressed: () async {
+                     onPressed: () async {
                         await ExcelUtil.crearReporteConPlantilla(
                           {
                             "nombre": "Cristian Escalante",
@@ -430,7 +430,7 @@ List<int> respuestas = [];
                           Text('Exportar CSV', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                         ],
                       ),
-                    ),
+                    ),*/
                   ]
                ),
              ),
@@ -459,31 +459,7 @@ List<int> respuestas = [];
             ),
               ancho > 800 ? Text(info["titulo"], style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white,),) : SizedBox()]),
     
-            Container(
-              padding: const EdgeInsets.all(8.0),
-              decoration: BoxDecoration(
-                color: Color.fromARGB(255, 255, 255, 255),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 5,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: GestureDetector(
-                onTap: () => _responderTodoAutomaticamente(),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.person, color: Color.fromARGB(255, 0, 132, 255),),
-                    const SizedBox(width: 8),
-                    Text("Cristian Fernando", style: TextStyle(fontWeight: FontWeight.bold, color: Color.fromARGB(255, 0, 132, 255)),)
-                  ],
-                ),
-              ),
-            ),
+            SizedBox(width: 30)
 
           ],
         
@@ -504,6 +480,45 @@ List<int> respuestas = [];
                 },
               ),
               Positioned(child: Text(textAlign: TextAlign.center,"Pregunta ${paginaActual} de ${preguntas.length}", style: const TextStyle(color: Color.fromARGB(255, 255, 255, 255))), bottom: 10, right: 10, left: 10,)
+        
+               /*   ListView.builder(
+            physics: const ClampingScrollPhysics(),
+            itemCount: preguntas.length,
+            itemBuilder: (context, index) {
+            
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+              child: Row(
+                children: [
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: const Color.fromARGB(255, 0, 132, 255),
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 5,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Center(child: Text("${index + 1}", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),)),
+                  ),
+                  Flexible(
+                    child: _pagina(
+                            preguntas[index],
+                            const Color.fromARGB(255, 0, 152, 223),
+                            incisos,
+                            (seleccionado) => alSeleccionar(index, seleccionado),
+                            respuestas[index],
+                          ),
+                  ),
+                ],
+              ),
+            );
+           })**/
             ],
             ),
         
@@ -700,7 +715,6 @@ Widget _pagina(
           child: Row(
             children: [
               ...secondRow.map(buildLandscapeButton).toList(),
-              // rellenar con espacio vacío si segunda fila tiene menos botones
               ...List.generate(cols - secondRow.length, (_) => Expanded(child: SizedBox())),
             ],
           ),

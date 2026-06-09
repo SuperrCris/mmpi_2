@@ -3,6 +3,7 @@ import 'package:excel/excel.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart' show ByteData, rootBundle;
 import 'package:mmpi_2/servicios/controlador_hive.dart';
+import 'package:mmpi_2/utilidades/repositoriopreguntas.dart';
 
 
 class ExcelUtil {
@@ -25,57 +26,45 @@ static Future<void> crearReporteConPlantilla(Map<String, dynamic> info) async {
   ByteData data = await rootBundle.load('recursos/plantilla.xlsx');
   var excel = Excel.decodeBytes(data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
 
-     CellStyle estiloCelda = CellStyle(
-      horizontalAlign: HorizontalAlign.Center,
-      bottomBorder: Border(borderStyle: BorderStyle.Thin, borderColorHex: ExcelColor.black),
-      leftBorder: Border(borderStyle: BorderStyle.Thin, borderColorHex: ExcelColor.black),
-      rightBorder: Border(borderStyle: BorderStyle.Thin, borderColorHex: ExcelColor.black),
-      topBorder: Border(borderStyle: BorderStyle.Thin, borderColorHex: ExcelColor.black),
-    );
-
   print("plantilla obtenida");
-    for (final entry in respuestasPorInventario.entries) {
-      final inventario = entry.key;
-      final respuestasInventario = entry.value;
-      final configuracionPestana = _diccionarioPestanas[inventario];
+  for (final entry in respuestasPorInventario.entries) {
+    final inventario = entry.key;
+    final respuestasInventario = entry.value;
+    print("Obteniendo solo las llaves para el inventario: $inventario");
+    final List<int> llavesRespuestas = obtenerSoloLlaves(inventario);
 
-      if (configuracionPestana == null) {
-        print("Inventario no reconocido: $inventario");
-        continue;
-      }
+    final configuracionPestana = _diccionarioPestanas[inventario];
+    print("$inventario  .llaves respuestas: $llavesRespuestas");
+    if (configuracionPestana == null) {
+      print("Inventario no reconocido: $inventario");
+      continue;
+    }
 
-      final hojaderesultados = excel[configuracionPestana["nombre"].toString()];
-      final int numeroColumnas = configuracionPestana["numeroColumnas"] as int;
-      final Map<int, int> respuestasMapeadas = {
-        for (int indice = 0; indice < respuestasInventario.length; indice++)
-          indice + 1: respuestasInventario[indice],
-      };
-  
+    final hojaderesultados = excel[configuracionPestana["nombre"].toString()];
+    final int numeroColumnas = configuracionPestana["numeroColumnas"] as int;
+    final Map<int, int> respuestasMapeadas = {
+      for (int indice = 0; indice < respuestasInventario.length; indice++)
+        (llavesRespuestas.length > indice ? llavesRespuestas[indice] : indice + 1):
+            respuestasInventario[indice] + 1,
+    };
 
-  //Nombre completo
-  hojaderesultados.cell(CellIndex.indexByString("B3")).value = TextCellValue(info["nombre"]);
-  hojaderesultados.cell(CellIndex.indexByString("B3")).cellStyle = estiloCelda;
+    //Nombre completo
+    _escribirCelda(hojaderesultados, CellIndex.indexByString("B3"), TextCellValue(info["nombre"]));
 
-  //Grupo
-  hojaderesultados.cell(CellIndex.indexByString("B4")).value = TextCellValue(info["grupo"]);
-  hojaderesultados.cell(CellIndex.indexByString("B4")).cellStyle = estiloCelda;
+    //Grupo
+    _escribirCelda(hojaderesultados, CellIndex.indexByString("B4"), TextCellValue(info["grupo"]));
 
-  //Edad
-  hojaderesultados.cell(CellIndex.indexByString("D4")).value = IntCellValue(info["edad"]);
-  hojaderesultados.cell(CellIndex.indexByString("D4")).cellStyle = estiloCelda;
+    //Edad
+    _escribirCelda(hojaderesultados, CellIndex.indexByString("D4"), IntCellValue(info["edad"]));
 
-  //Sexo
-  hojaderesultados.cell(CellIndex.indexByString("F4")).value = TextCellValue(info["sexo"]);
-  hojaderesultados.cell(CellIndex.indexByString("F4")).cellStyle = estiloCelda;
+    //Sexo
+    _escribirCelda(hojaderesultados, CellIndex.indexByString("F4"), TextCellValue(info["sexo"]));
 
-  //Escolaridad
-  hojaderesultados.cell(CellIndex.indexByString("B5")).value = TextCellValue(info["escolaridad"]);
-  hojaderesultados.cell(CellIndex.indexByString("B5")).cellStyle = estiloCelda;
+    //Escolaridad
+    _escribirCelda(hojaderesultados, CellIndex.indexByString("B5"), TextCellValue(info["escolaridad"]));
 
-  //Fecha
-  hojaderesultados.cell(CellIndex.indexByString("E5")).value = TextCellValue(info["fecha"]);
-  hojaderesultados.cell(CellIndex.indexByString("E5")).cellStyle = estiloCelda;
-
+    //Fecha
+    _escribirCelda(hojaderesultados, CellIndex.indexByString("E5"), TextCellValue(info["fecha"]));
 
     const int columnainicial = 1;
     const int filaInicial = 8;
@@ -83,25 +72,32 @@ static Future<void> crearReporteConPlantilla(Map<String, dynamic> info) async {
 
     int saltoColumna = 0;
     int saltoFila = 0;
-    
 
-  for (int pregunta = 0; pregunta < respuestasMapeadas.length; pregunta++) {
-    hojaderesultados.cell(CellIndex.indexByColumnRow(columnIndex: columnainicial + saltoColumna, rowIndex: filaInicial + saltoFila)).value = IntCellValue(respuestasMapeadas.entries.elementAt(pregunta).key);
-    hojaderesultados.cell(CellIndex.indexByColumnRow(columnIndex: columnainicial + saltoColumna + 1, rowIndex: filaInicial + saltoFila)).value = IntCellValue(respuestasMapeadas.entries.elementAt(pregunta).value);
-    hojaderesultados.cell(CellIndex.indexByColumnRow(columnIndex: columnainicial + saltoColumna, rowIndex: filaInicial + saltoFila)).cellStyle = estiloCelda;
-    hojaderesultados.cell(CellIndex.indexByColumnRow(columnIndex: columnainicial + saltoColumna + 1, rowIndex: filaInicial + saltoFila)).cellStyle = estiloCelda;
-    saltoColumna += 2;
-    if (saltoColumna >= respuestasPorFila * 2) {
-      saltoColumna = 0;
-      saltoFila++;
+    for (int pregunta = 0; pregunta < respuestasMapeadas.length; pregunta++) {
+      _escribirCelda(hojaderesultados,
+          CellIndex.indexByColumnRow(columnIndex: columnainicial + saltoColumna, rowIndex: filaInicial + saltoFila),
+          IntCellValue(respuestasMapeadas.entries.elementAt(pregunta).key));
+      _escribirCelda(hojaderesultados,
+          CellIndex.indexByColumnRow(columnIndex: columnainicial + saltoColumna + 1, rowIndex: filaInicial + saltoFila),
+          IntCellValue(respuestasMapeadas.entries.elementAt(pregunta).value));
+      saltoColumna += 2;
+      if (saltoColumna >= respuestasPorFila * 2) {
+        saltoColumna = 0;
+        saltoFila++;
+      }
     }
-    
-    }
+  }
 
-  // Guardar el nuevo archivo
-
+  excel.save(fileName: 'Mi_Reporte${DateTime.now().millisecondsSinceEpoch}.xlsx');
 }
-  excel.save(fileName: 'Reporte_Modificado.xlsx');
+
+static void _escribirCelda(Sheet hoja, CellIndex indice, CellValue valor) {
+  final celda = hoja.cell(indice);
+  final estiloExistente = celda.cellStyle;
+  celda.value = valor;
+  final estilo = estiloExistente ?? CellStyle();
+  estilo.horizontalAlignment = HorizontalAlign.Center;
+  celda.cellStyle = estilo;
 }
 
 static Future<Map<String, List<int>>> _obtenerRespuestasInventarios() async {
@@ -172,9 +168,13 @@ static List<int> _obtenerRespuestasDesdeHive(String tipoInventario) {
           .where((respuesta) => respuesta.tipo == tipoInventario)
           .toList();
 
-  respuestas.sort((a, b) => a.preguntaID.compareTo(b.preguntaID));
-  return respuestas
-      .map((respuesta) => int.tryParse(respuesta.respuesta) ?? -1)
+  final llaves = obtenerSoloLlaves(tipoInventario);
+  final mapaRespuestas = {
+    for (final r in respuestas) r.preguntaID: int.tryParse(r.respuesta) ?? -1,
+  };
+
+  return llaves
+      .map((key) => mapaRespuestas[key] ?? -1)
       .where((valor) => valor >= 0)
       .toList();
 }

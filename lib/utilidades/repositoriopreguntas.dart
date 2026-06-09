@@ -23,8 +23,25 @@ List<String> Repositoriopreguntas(String inv) {
         }
     }
 }
-List<int> obtenerSoloLlaves(Map<String, dynamic> inventario) {
-  return inventario.keys.map((key) => int.tryParse(key) ?? -1).where((key) => key != -1).toList();
+
+List<int> obtenerSoloLlaves(String inv) {
+  final key = inv.startsWith("/") ? inv.substring(1) : inv;
+  print("buscando en $key");
+
+  switch (inv) {
+    case "/inventario_autoevaluacion_aptitudes":
+      return aptitudes.keys.toList();
+    case "/inventario_interes_ocupacional":
+      return ocupacional.keys.toList();
+    case "/inventario_preferencias_universitarias":
+      return universitarias.keys.toList();
+    default:
+      try {
+        return (intereses[key]["preguntas"] as Map).keys.toList().cast<int>();
+      } catch (e) {
+        return [];
+      }
+  }
 }
 
 
@@ -43,10 +60,12 @@ Map<String, Map<String, dynamic>> todoslosintereses() {
 
 int tamanoInventario(String inv, {String tipo = ""}) => Repositoriopreguntas(inv).length;
   final Map<String, dynamic> intereses = {
+   
     "FM" :{
       "nombre": "Fisico Matemático",
       "rangocalificacion": 7,
       "descripcion": "Se relaciona con el interés por las matemáticas, física y ciencias exactas.",
+      
       "icono" : Icons.calculate,
       "carreras": [
       ],
