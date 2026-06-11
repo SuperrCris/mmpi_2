@@ -45,6 +45,30 @@ List<int> obtenerSoloLlaves(String inv) {
 }
 
 
+/// Recibe las 60 respuestas (0-4) de inventario_preferencias_universitarias2
+/// y devuelve un map {claveInteres: puntajeTotal} ordenado de mayor a menor.
+/// El orden de los intereses es FM, B, Q, S, A, H (posiciones 0-5).
+/// Cada interés recibe las respuestas en índices: i, i+6, i+12, ..., i+54
+Map<String, int> calcularPuntajesIntereses(List<int> respuestas) {
+  const clavesIntereses = ["FM", "B", "Q", "S", "A", "H"];
+  const totalIntereses = 6;
+  final puntajes = <String, int>{};
+
+  for (int i = 0; i < clavesIntereses.length; i++) {
+    int total = 0;
+    for (int j = i; j < respuestas.length; j += totalIntereses) {
+      final valor = respuestas[j];
+      if (valor >= 0) total += valor;
+    }
+    puntajes[clavesIntereses[i]] = total;
+  }
+
+  final ordenado = puntajes.entries.toList()
+    ..sort((a, b) => b.value.compareTo(a.value));
+
+  return Map.fromEntries(ordenado);
+}
+
 Map<String, Map<String, dynamic>> todoslosintereses() {
   return {
     for (var key in intereses.keys)
@@ -60,12 +84,10 @@ Map<String, Map<String, dynamic>> todoslosintereses() {
 
 int tamanoInventario(String inv, {String tipo = ""}) => Repositoriopreguntas(inv).length;
   final Map<String, dynamic> intereses = {
-   
     "FM" :{
       "nombre": "Fisico Matemático",
       "rangocalificacion": 7,
       "descripcion": "Se relaciona con el interés por las matemáticas, física y ciencias exactas.",
-      
       "icono" : Icons.calculate,
       "carreras": [
       ],

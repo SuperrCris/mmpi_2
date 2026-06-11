@@ -20,7 +20,38 @@ static final Map<String, Map<String, dynamic>> _diccionarioPestanas = {
   "/H": {"nombre": "H", "numeroColumnas": 10},
 };
 
-static Future<void> crearReporteConPlantilla(Map<String, dynamic> info) async {
+static Future<Map<String, dynamic>> _obtenerInfoUsuario() async {
+  final usuario = FirebaseAuth.instance.currentUser;
+  final hoy = DateTime.now();
+  final fechaHoy = '${hoy.day.toString().padLeft(2, '0')}/${hoy.month.toString().padLeft(2, '0')}/${hoy.year}';
+
+  if (usuario == null) {
+    return {'nombre': 'Invitado', 'edad': null, 'sexo': '', 'fecha': fechaHoy};
+  }
+
+  try {
+    final doc = await FirebaseFirestore.instance.collection('usuarios').doc(usuario.uid).get();
+    if (!doc.exists || doc.data() == null) {
+      return {'nombre': 'Invitado', 'edad': null, 'sexo': '', 'fecha': fechaHoy};
+    }
+    final data = doc.data()!;
+    final nombre = '${data['nombre'] ?? ''} ${data['apellido'] ?? ''}'.trim();
+    final edadRaw = data['edad'];
+    final int? edad = edadRaw is int ? edadRaw : int.tryParse(edadRaw?.toString() ?? '');
+    return {
+      'nombre': nombre.isEmpty ? 'Invitado' : nombre,
+      'edad': edad,
+      'sexo': data['sexo']?.toString() ?? '',
+      'fecha': fechaHoy,
+    };
+  } catch (e) {
+    print('Error al obtener info de usuario: $e');
+    return {'nombre': 'Invitado', 'edad': null, 'sexo': '', 'fecha': fechaHoy};
+  }
+}
+
+static Future<void> crearReporteConPlantilla() async {
+  final info = await _obtenerInfoUsuario();
   final respuestasPorInventario = await _obtenerRespuestasInventarios();
 
   ByteData data = await rootBundle.load('recursos/plantilla.xlsx');
@@ -52,16 +83,21 @@ static Future<void> crearReporteConPlantilla(Map<String, dynamic> info) async {
     _escribirCelda(hojaderesultados, CellIndex.indexByString("B3"), TextCellValue(info["nombre"]));
 
     //Grupo
-    _escribirCelda(hojaderesultados, CellIndex.indexByString("B4"), TextCellValue(info["grupo"]));
+   // _escribirCelda(hojaderesultados, CellIndex.indexByString("B4"), TextCellValue(info["grupo"]));
 
     //Edad
-    _escribirCelda(hojaderesultados, CellIndex.indexByString("D4"), IntCellValue(info["edad"]));
+    final edadInfo = info["edad"];
+    if (edadInfo is int) {
+      _escribirCelda(hojaderesultados, CellIndex.indexByString("D4"), IntCellValue(edadInfo));
+    } else {
+      _escribirCelda(hojaderesultados, CellIndex.indexByString("D4"), TextCellValue(''));
+    }
 
     //Sexo
-    _escribirCelda(hojaderesultados, CellIndex.indexByString("F4"), TextCellValue(info["sexo"]));
+    _escribirCelda(hojaderesultados, CellIndex.indexByString("F4"), TextCellValue(info["sexo"] ?? ''));
 
     //Escolaridad
-    _escribirCelda(hojaderesultados, CellIndex.indexByString("B5"), TextCellValue(info["escolaridad"]));
+    //_escribirCelda(hojaderesultados, CellIndex.indexByString("B5"), TextCellValue(info["escolaridad"]));
 
     //Fecha
     _escribirCelda(hojaderesultados, CellIndex.indexByString("E5"), TextCellValue(info["fecha"]));
@@ -88,7 +124,7 @@ static Future<void> crearReporteConPlantilla(Map<String, dynamic> info) async {
     }
   }
 
-  excel.save(fileName: 'Mi_Reporte${DateTime.now().millisecondsSinceEpoch}.xlsx');
+  excel.save(fileName: 'Mi_Reporte_${info["nombre"]}_${DateTime.now().millisecondsSinceEpoch}.xlsx');
 }
 
 static void _escribirCelda(Sheet hoja, CellIndex indice, CellValue valor) {

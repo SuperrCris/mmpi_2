@@ -410,17 +410,7 @@ List<int> respuestas = [];
                         textStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
                      onPressed: () async {
-                        await ExcelUtil.crearReporteConPlantilla(
-                          {
-                            "nombre": "Cristian Escalante",
-                            "grupo": "5°A",
-                            "edad": 25,
-                            "sexo": "Masculino",
-                            "escolaridad": "Universidad",
-                            "fecha": "2024-06-15",
-                            "respuestas": respuestas,
-                          }
-                        );
+                        await ExcelUtil.crearReporteConPlantilla();
                       },
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,

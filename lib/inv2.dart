@@ -1,5 +1,6 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:mmpi_2/servicios/controlador_hive.dart';
 import 'package:mmpi_2/utilidades/repositoriopreguntas.dart';
 
 class inventario2 extends StatefulWidget {
@@ -22,12 +23,35 @@ class _inventario2State extends State<inventario2> {
         ],
         "ruta": "/inventario_interes_ocupacional",
       }};
-  List<String> interesesFavoritos = ["FM","A"];
+  List<int> respuestas = [];
+  List<String> interesesFavoritos = [];
 
   @override
   void initState() {
       super.initState();
       intereses = todoslosintereses();
+      respuestas = ControladorHive.obtRespuestasPorTipo("/inventario_preferencias_universitarias")
+          .map((r) => r.preguntaID)
+          .toList();
+      final lista = List<int>.filled(60, -1);
+      for (final r in ControladorHive.obtRespuestasPorTipo("/inventario_preferencias_universitarias")) {
+        if (r.preguntaID >= 0 && r.preguntaID < 60) {
+          lista[r.preguntaID] = int.tryParse(r.respuesta) ?? -1;
+        }
+      }
+      final puntajes = calcularPuntajesIntereses(lista);
+      int puntajealto = 0;
+      if (puntajes.isNotEmpty) {
+        for (final puntaje in puntajes.entries) {
+          if (puntaje.value >= puntajealto) {
+            puntajealto = puntaje.value;
+          }
+        }
+        interesesFavoritos = puntajes.entries
+            .where((puntaje) => puntaje.value == puntajealto)
+            .map((puntaje) => puntaje.key)
+            .toList();
+      }
   }
 
   @override

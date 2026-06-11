@@ -1,6 +1,8 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:mmpi_2/servicios/controlador_hive.dart';
 import 'package:mmpi_2/servicios/sesion_controlador.dart';
+import 'package:mmpi_2/utilidades/repositoriopreguntas.dart';
 
 class Registro extends StatefulWidget {
   @override
@@ -8,6 +10,40 @@ class Registro extends StatefulWidget {
 }
 
 class _RegistroState extends State<Registro> {
+  Map<String, int> puntajesIntereses = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _calcularInteresesFavoritos();
+  }
+
+  void _calcularInteresesFavoritos() {
+    const tipo = '/inventario_preferencias_universitarias2';
+    final uid = SesionControlador().usuarioId;
+
+    final respuestasHive = uid.isEmpty
+        ? ControladorHive.obtRespuestasPorTipo(tipo)
+        : ControladorHive.obtenerRespuestasUsuario(uid)
+            .where((r) => r.tipo == tipo)
+            .toList();
+
+    if (respuestasHive.isEmpty) return;
+
+    final lista = List<int>.filled(60, -1);
+    for (final r in respuestasHive) {
+      if (r.preguntaID >= 0 && r.preguntaID < 60) {
+        lista[r.preguntaID] = int.tryParse(r.respuesta) ?? -1;
+      }
+    }
+
+    setState(() {
+      puntajesIntereses = calcularPuntajesIntereses(lista);
+    });
+
+    print('Puntajes de intereses: $puntajesIntereses');
+  }
+
   final Map<String, dynamic> datos = {
     'nombre': '',
     'apellido': '',
@@ -17,6 +53,11 @@ class _RegistroState extends State<Registro> {
     'clave': '',
     'clave_confirmar': '',
   };
+
+  String? _sexo;
+
+  DateTime? _fechaNacimiento;
+  final TextEditingController _fechaController = TextEditingController();
 
   final GlobalKey<FormState> _llaveFormulario = GlobalKey<FormState>();
   final TextEditingController _claveController = TextEditingController();
@@ -29,8 +70,36 @@ class _RegistroState extends State<Registro> {
   final FocusNode _fnClave = FocusNode();
   final FocusNode _fnClaveConfirmar = FocusNode();
 
+  int? get _edad {
+    if (_fechaNacimiento == null) return null;
+    final hoy = DateTime.now();
+    int edad = hoy.year - _fechaNacimiento!.year;
+    if (hoy.month < _fechaNacimiento!.month ||
+        (hoy.month == _fechaNacimiento!.month && hoy.day < _fechaNacimiento!.day)) {
+      edad--;
+    }
+    return edad;
+  }
+
+  Future<void> _seleccionarFecha() async {
+    final DateTime? seleccionada = await showDatePicker(
+      context: context,
+      initialDate: _fechaNacimiento ?? DateTime.now().subtract(const Duration(days: 365 * 18)),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (seleccionada != null) {
+      setState(() {
+        _fechaNacimiento = seleccionada;
+        _fechaController.text =
+            '${seleccionada.day.toString().padLeft(2, '0')}/${seleccionada.month.toString().padLeft(2, '0')}/${seleccionada.year}';
+      });
+    }
+  }
+
   @override
   void dispose() {
+    _fechaController.dispose();
     _claveController.dispose();
     _fnNombre.dispose();
     _fnApellido.dispose();
@@ -116,6 +185,32 @@ class _RegistroState extends State<Registro> {
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) return 'El apellido es requerido';
                       if (value.trim().length < 2) return 'Ingresa un apellido válido';
+                      return null;
+                    },
+                  ),
+                  DropdownButtonFormField<String>(
+                    value: _sexo,
+                    decoration: decoracion('Sexo'),
+                    items: const [
+                      DropdownMenuItem(value: 'M', child: Text('Masculino')),
+                      DropdownMenuItem(value: 'F', child: Text('Femenino')),
+                    ],
+                    onChanged: (value) => setState(() => _sexo = value),
+                    validator: (value) {
+                      if (value == null) return 'El sexo es requerido';
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: _fechaController,
+                    readOnly: true,
+                    onTap: _seleccionarFecha,
+                    decoration: decoracion('Fecha de Nacimiento').copyWith(
+                      suffixIcon: const Icon(Icons.calendar_today),
+                      helperText: _edad != null ? 'Edad: $_edad años' : null,
+                    ),
+                    validator: (value) {
+                      if (_fechaNacimiento == null) return 'La fecha de nacimiento es requerida';
                       return null;
                     },
                   ),
@@ -275,6 +370,9 @@ class _RegistroState extends State<Registro> {
         'apellido': datos['apellido'],
         'curp': datos['curp'],
         'rfc': datos['rfc'],
+        'sexo': _sexo ?? '',
+        'fecha_nacimiento': _fechaNacimiento?.toIso8601String() ?? '',
+        'edad': _edad ?? 0,
       });
     if (!mounted) return;
     if (resultado['exito']) {

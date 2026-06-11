@@ -456,16 +456,7 @@ class _SeleccionInventarioState extends State<SeleccionInventario> {
                               ),
                             );
                             try {
-                              await ExcelUtil.crearReporteConPlantilla(
-                                {
-                                  "nombre": "Cristian Escalante",
-                                  "grupo": "5°A",
-                                  "edad": 25,
-                                  "sexo": "Masculino",
-                                  "escolaridad": "Universidad",
-                                  "fecha": "2024-06-15",
-                                }
-                              );
+                              await ExcelUtil.crearReporteConPlantilla();
                             } finally {
                               if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
                             }
